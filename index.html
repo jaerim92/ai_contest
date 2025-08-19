@@ -1,50 +1,13 @@
-// 이벤트 리스너 설정
-        document.addEventListener('DOMContentLoaded', function() {
-            // Firebase에서 작품 로드
-            loadWorksFromFirebase();
-            
-            // 카테고리 버튼 클릭
-            document.querySelectorAll('.category-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    currentCategory = this.dataset.category;
-                    performSearch();
-                });
-            });
-
-            // 검색 입력
-            document.getElementById('searchInput').addEventListener('input', performSearch);
-
-            // 모달 닫기
-            document.querySelector('.close-btn').addEventListener('click', closeModal);
-            document.getElementById('workModal').addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeModal();
-                }
-            });
-
-            // ESC 키로 모달 닫기
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    closeModal();
-                }
-            });
-        });
-
-        // 전역 함수로 내보내기
-        window.closeModal = closeModal;
-    </script>
-</body>
-</html>
-    </script>
-</body>
-</html><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>부산 동구청 생성형 AI 문예창작 대회 갤러리</title>
+    <title>AI Contest Gallery - Supabase</title>
+    
+    <!-- Supabase JavaScript Client (안정화 버전) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.0/dist/umd/supabase.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -53,299 +16,339 @@
         }
 
         body {
-            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
-            line-height: 1.6;
-            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-bar {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 25px;
+            width: 250px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-bar:focus {
+            background: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 300px;
+        }
+
+        .filter-select {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 25px;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-select:focus {
+            background: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .view-toggle {
+            display: flex;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            overflow: hidden;
+        }
+
+        .view-btn {
+            padding: 0.5rem 1rem;
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .view-btn.active {
+            background: white;
+            color: #333;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .add-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .add-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 40px 20px;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
-        }
-
-        .header h1 {
-            font-size: 2.5em;
-            color: #2c3e50;
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-
-        .header p {
-            font-size: 1.2em;
-            color: #7f8c8d;
-            margin-bottom: 20px;
+            padding: 2rem;
         }
 
         .stats {
             display: flex;
-            justify-content: center;
-            gap: 30px;
+            gap: 1rem;
+            margin-bottom: 2rem;
             flex-wrap: wrap;
         }
 
-        .stat-item {
+        .stat-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 1.5rem;
+            flex: 1;
+            min-width: 200px;
             text-align: center;
-            padding: 10px 20px;
-            background: linear-gradient(45deg, #3498db, #2980b9);
-            color: white;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .stat-number {
-            font-size: 2em;
+            font-size: 2rem;
             font-weight: bold;
+            color: white;
             display: block;
         }
 
         .stat-label {
-            font-size: 0.9em;
-            opacity: 0.9;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
         }
 
-        .loading {
-            text-align: center;
-            padding: 50px;
-            color: #7f8c8d;
-            font-size: 1.2em;
-        }
-
-        .category-nav {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 40px;
-            flex-wrap: wrap;
-        }
-
-        .category-btn {
-            padding: 12px 25px;
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 1em;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .category-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            background: white;
-        }
-
-        .category-btn.active {
-            background: linear-gradient(45deg, #e74c3c, #c0392b);
-            color: white;
-            transform: translateY(-3px);
-        }
-
-        .search-container {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .search-input {
-            padding: 15px 20px;
-            width: 100%;
-            max-width: 500px;
-            border: none;
-            border-radius: 25px;
-            background: rgba(255,255,255,0.9);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            font-size: 1em;
-            outline: none;
-        }
-
-        .works-grid {
+        .gallery {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 30px;
-            margin-bottom: 40px;
+            gap: 1.5rem;
+            margin-top: 2rem;
         }
 
-        .work-card {
+        .gallery.grid-view {
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        }
+
+        .gallery.list-view {
+            grid-template-columns: 1fr;
+        }
+
+        .gallery-item {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            transition: all 0.4s ease;
-            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
             cursor: pointer;
         }
 
-        .work-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        .gallery-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.2);
         }
 
-        .work-image {
-            height: 200px;
-            background: linear-gradient(45deg, #f39c12, #e67e22);
+        .gallery.list-view .gallery-item {
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 3em;
-            color: white;
+        }
+
+        .gallery.list-view .gallery-item .item-image {
+            width: 200px;
+            height: 120px;
+            flex-shrink: 0;
+        }
+
+        .item-image {
+            width: 100%;
+            height: 240px;
+            background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
             position: relative;
             overflow: hidden;
         }
 
-        .work-image img {
+        .item-image img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: transform 0.3s ease;
         }
 
-        .work-card:hover .work-image img {
-            transform: scale(1.05);
-        }
-
-        .work-image.no-image::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(1px);
-        }
-
-        .image-overlay {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(transparent, rgba(0,0,0,0.7));
+        .item-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
             color: white;
-            padding: 15px;
-            font-size: 0.9em;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            font-size: 3rem;
         }
 
-        .work-card:hover .image-overlay {
-            opacity: 1;
+        .item-info {
+            padding: 1.5rem;
         }
 
-        .work-content {
-            padding: 25px;
+        .gallery.list-view .item-info {
+            padding: 1rem;
+            flex: 1;
         }
 
-        .work-category {
-            display: inline-block;
-            padding: 5px 12px;
-            background: linear-gradient(45deg, #9b59b6, #8e44ad);
-            color: white;
-            border-radius: 15px;
-            font-size: 0.8em;
-            margin-bottom: 15px;
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .item-title {
+            font-size: 1.2rem;
             font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #333;
+            line-height: 1.4;
         }
 
-        .work-title {
-            font-size: 1.4em;
-            font-weight: 700;
-            margin-bottom: 10px;
-            color: #2c3e50;
-            line-height: 1.3;
-        }
-
-        .work-author {
-            color: #7f8c8d;
-            font-size: 1em;
-            margin-bottom: 15px;
+        .item-category {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
             font-weight: 500;
         }
 
-        .work-preview {
-            color: #555;
-            line-height: 1.6;
-            margin-bottom: 20px;
+        .item-author {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            color: #666;
+        }
+
+        .author-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .author-dept {
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        .item-content {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
             display: -webkit-box;
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
 
-        .work-meta {
+        .item-tools {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .tool-tag {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+
+        .item-meta {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.9em;
-            color: #95a5a6;
-            border-top: 1px solid #ecf0f1;
-            padding-top: 15px;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+            font-size: 0.9rem;
+            color: #666;
         }
 
-        .work-actions {
+        .item-date {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 0.25rem;
         }
 
-        .like-btn {
-            background: none;
-            border: none;
+        .item-stats {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            padding: 5px 10px;
-            border-radius: 15px;
-            transition: all 0.3s ease;
-            font-size: 0.9em;
+            transition: color 0.3s ease;
         }
 
-        .like-btn:hover {
-            background: rgba(231, 76, 60, 0.1);
-            transform: scale(1.05);
+        .stat:hover {
+            color: #e74c3c;
         }
 
-        .heart {
-            font-size: 1.2em;
-            transition: all 0.3s ease;
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: rgba(255, 255, 255, 0.8);
         }
 
-        .views {
-            display: flex;
-            align-items: center;
-            gap: 3px;
-            color: #95a5a6;
-            font-size: 0.85em;
-        }
-
-        .ai-tools {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .ai-tool {
-            padding: 3px 8px;
-            background: linear-gradient(45deg, #16a085, #27ae60);
-            color: white;
-            border-radius: 10px;
-            font-size: 0.75em;
-            font-weight: 500;
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
         }
 
         .modal {
@@ -355,492 +358,808 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.9);
             z-index: 1000;
             backdrop-filter: blur(5px);
         }
 
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
         .modal-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
             background: white;
             border-radius: 20px;
-            padding: 40px;
-            max-width: 900px;
-            max-height: 85vh;
+            max-width: 800px;
+            max-height: 90vh;
             overflow-y: auto;
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
         }
 
-        .close-btn {
+        .modal-close {
             position: absolute;
-            top: 20px;
-            right: 25px;
-            font-size: 30px;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(0,0,0,0.1);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            color: #95a5a6;
-            transition: color 0.3s;
+            font-size: 1.5rem;
+            color: #666;
+            z-index: 10;
         }
 
-        .close-btn:hover {
+        .modal-image {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .modal-info {
+            padding: 2rem;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 2px solid white;
+            animation: spin 1s linear infinite;
+        }
+
+        .error-message {
+            background: rgba(231, 76, 60, 0.1);
             color: #e74c3c;
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+            border-left: 4px solid #e74c3c;
+        }
+
+        .success-message {
+            background: rgba(46, 204, 113, 0.1);
+            color: #2ecc71;
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+            border-left: 4px solid #2ecc71;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2em;
+            .header-content {
+                flex-direction: column;
+                align-items: stretch;
             }
-            
-            .works-grid {
+
+            .controls {
+                justify-content: center;
+            }
+
+            .search-bar {
+                width: 200px;
+                min-width: 150px;
+            }
+
+            .search-bar:focus {
+                width: 250px;
+            }
+
+            .stats {
+                flex-direction: column;
+            }
+
+            .gallery.grid-view {
                 grid-template-columns: 1fr;
-                gap: 20px;
             }
-            
-            .category-nav {
-                gap: 10px;
+
+            .gallery.list-view .gallery-item {
+                flex-direction: column;
             }
-            
-            .category-btn {
-                padding: 10px 20px;
-                font-size: 0.9em;
+
+            .gallery.list-view .gallery-item .item-image {
+                width: 100%;
+                height: 200px;
             }
-            
+
             .modal-content {
-                margin: 20px;
-                padding: 30px 20px;
-                max-width: calc(100% - 40px);
+                margin: 1rem;
             }
         }
     </style>
 </head>
 <body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">🏆 AI Contest Gallery</div>
+            <div class="controls">
+                <input type="text" class="search-bar" placeholder="제목, 작가, 내용 검색..." id="searchInput">
+                <select class="filter-select" id="categoryFilter">
+                    <option value="">모든 카테고리</option>
+                    <option value="이미지">이미지</option>
+                    <option value="텍스트">텍스트</option>
+                    <option value="동영상">동영상</option>
+                    <option value="음성">음성</option>
+                </select>
+                <select class="filter-select" id="departmentFilter">
+                    <option value="">모든 부서</option>
+                    <option value="기획감사실">기획감사실</option>
+                    <option value="디지털혁신실">디지털혁신실</option>
+                    <option value="마케팅실">마케팅실</option>
+                    <option value="개발팀">개발팀</option>
+                </select>
+                <div class="view-toggle">
+                    <button class="view-btn active" data-view="grid">🔲</button>
+                    <button class="view-btn" data-view="list">☰</button>
+                </div>
+                <button class="add-btn" onclick="showAddModal()">
+                    ➕ 작품 추가
+                </button>
+            </div>
+        </div>
+    </header>
+
     <div class="container">
-        <div class="header">
-            <h1>🏛️ 부산 동구청 생성형 AI 문예창작 대회</h1>
-            <p>직원들의 창의적인 AI 활용 작품을 만나보세요</p>
-            <div class="stats">
-                <div class="stat-item">
-                    <span class="stat-number" id="totalWorks">-</span>
-                    <span class="stat-label">총 작품수</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number" id="totalDepartments">-</span>
-                    <span class="stat-label">참여 부서</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number" id="totalAuthors">-</span>
-                    <span class="stat-label">참여 직원</span>
-                </div>
+        <div id="connectionStatus"></div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <span class="stat-number" id="totalWorks">0</span>
+                <div class="stat-label">총 작품 수</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="totalLikes">0</span>
+                <div class="stat-label">총 좋아요</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="totalViews">0</span>
+                <div class="stat-label">총 조회수</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="popularCategory">-</span>
+                <div class="stat-label">인기 카테고리</div>
             </div>
         </div>
 
-        <div class="category-nav">
-            <button class="category-btn active" data-category="all">전체 작품</button>
-            <button class="category-btn" data-category="시">시 (Poetry)</button>
-            <button class="category-btn" data-category="소설">소설 (Fiction)</button>
-            <button class="category-btn" data-category="이미지">이미지 (Image)</button>
-            <button class="category-btn" data-category="노래">노래 (Song)</button>
-        </div>
-
-        <div class="search-container">
-            <input type="text" id="searchInput" class="search-input" placeholder="작품 제목이나 작가명으로 검색하세요...">
-        </div>
-
-        <div class="works-grid" id="worksGrid">
-            <div class="loading">📚 작품을 불러오는 중입니다...</div>
+        <div class="gallery grid-view" id="gallery">
+            <div class="empty-state">
+                <div class="loading"></div>
+                <h3>데이터를 불러오는 중...</h3>
+            </div>
         </div>
     </div>
 
-    <div class="modal" id="workModal">
+    <div class="modal" id="modal">
         <div class="modal-content">
-            <span class="close-btn">&times;</span>
-            <div id="modalContent">
-                <!-- 모달 내용이 동적으로 생성됩니다 -->
-            </div>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <div id="modalBody"></div>
         </div>
     </div>
 
-    <!-- Firebase SDK (호환 버전) -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    
     <script>
-        // Firebase 설정
-        const firebaseConfig = {
-            apiKey: "AIzaSyD7E_cvY0alSd-_tvOXTWSSv8FUM_u0k4g",
-            authDomain: "bsdonggu-ai-contest.firebaseapp.com",
-            databaseURL: "https://bsdonggu-ai-contest-default-rtdb.firebaseio.com",
-            projectId: "bsdonggu-ai-contest",
-            storageBucket: "bsdonggu-ai-contest.firebasestorage.app",
-            messagingSenderId: "546475657103",
-            appId: "1:546475657103:web:5858b99fc00460655eadfa",
-            measurementId: "G-JJRK6F43S9"
-        };
+        // Supabase 설정
+        const SUPABASE_URL = 'https://sqimukkxxxwvmfefvrtv.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxaW11a2t4eHh3dm1mZWZ2cnR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MjQ0MzcsImV4cCI6MjA3MTIwMDQzN30.2BQnQ6NwTA3jX0d_OvsV5TEFwJl8KRcEsMYwA0rAvxQ';
 
-        // Firebase 초기화
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        // 전역 변수
-        let works = [];
-        let currentCategory = 'all';
-
-        // 카테고리 아이콘
-        function getCategoryIcon(category) {
-            const icons = {
-                '시': '📝',
-                '소설': '📚',
-                '이미지': '🎨',
-                '노래': '🎵'
-            };
-            return icons[category] || '📄';
-        }
-
-        // Firebase에서 모든 작품 로드
-        async function loadWorksFromFirebase() {
-            try {
-                console.log('Firebase에서 작품 데이터 로드 중...');
-                const snapshot = await db.collection('works').orderBy('createdAt', 'desc').get();
-                
-                works = [];
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    works.push({
-                        id: doc.id,
-                        ...data,
-                        // 배열 데이터 처리
-                        aiTools: Array.isArray(data.tools) ? data.tools : [data.tools || 'AI'],
-                        // 기본값 설정
-                        likes: data.likes || 0,
-                        views: data.views || 0,
-                        // 날짜 처리
-                        createdAt: data.createdAt ? data.createdAt.toDate() : new Date(),
-                        date: data.date || new Date().toISOString().split('T')[0]
-                    });
-                });
-
-                console.log(`${works.length}개 작품 로드 완료`);
-                renderWorks();
-                updateStats();
-                setupRealtimeListener();
-                
-            } catch (error) {
-                console.error('작품 로드 오류:', error);
-                document.getElementById('worksGrid').innerHTML = `
-                    <div class="loading" style="color: #e74c3c;">
-                        ⚠️ 작품을 불러오는 중 오류가 발생했습니다.<br>
-                        잠시 후 다시 시도해주세요.<br>
-                        <small>오류: ${error.message}</small>
-                    </div>
-                `;
+        class AIContestGallery {
+            constructor() {
+                this.works = [];
+                this.currentView = 'grid';
+                this.filteredWorks = [];
+                this.supabase = null;
+                this.isLoading = false;
+                this.init();
             }
-        }
 
-        // 실시간 업데이트 리스너
-        function setupRealtimeListener() {
-            try {
-                db.collection('works').onSnapshot((snapshot) => {
-                    snapshot.docChanges().forEach((change) => {
-                        const workData = { id: change.doc.id, ...change.doc.data() };
-                        
-                        if (change.type === 'added' || change.type === 'modified') {
-                            const existingIndex = works.findIndex(w => w.id === workData.id);
-                            
-                            if (existingIndex >= 0) {
-                                // 기존 작품 업데이트
-                                works[existingIndex] = {
-                                    ...works[existingIndex],
-                                    ...workData,
-                                    aiTools: Array.isArray(workData.tools) ? workData.tools : [workData.tools || 'AI']
-                                };
-                            } else {
-                                // 새 작품 추가 (초기 로드가 아닌 경우)
-                                if (works.length > 0) {
-                                    works.push({
-                                        ...workData,
-                                        aiTools: Array.isArray(workData.tools) ? workData.tools : [workData.tools || 'AI'],
-                                        likes: workData.likes || 0,
-                                        views: workData.views || 0
-                                    });
-                                    renderWorks();
-                                }
+            async init() {
+                await this.initSupabase();
+                this.setupEventListeners();
+                await this.loadWorksFromSupabase();
+                this.renderGallery();
+                this.updateStats();
+            }
+
+            async initSupabase() {
+                try {
+                    // Supabase 클라이언트 초기화
+                    if (typeof window.supabase !== 'undefined') {
+                        this.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                            auth: {
+                                persistSession: false,
+                                autoRefreshToken: false
                             }
-                            
-                            // 화면 업데이트
-                            updateWorkDisplay(workData.id);
+                        });
+                    } else if (typeof supabase !== 'undefined') {
+                        this.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                            auth: {
+                                persistSession: false,
+                                autoRefreshToken: false
+                            }
+                        });
+                    } else {
+                        throw new Error('Supabase 라이브러리를 찾을 수 없습니다');
+                    }
+                    
+                    console.log('✅ Supabase 클라이언트 생성 완료');
+                    
+                    // 간단한 연결 테스트 (테이블 존재 확인)
+                    console.log('🔍 테이블 존재 확인 중...');
+                    const { data, error } = await this.supabase
+                        .from('works')
+                        .select('id')
+                        .limit(1);
+                    
+                    if (error) {
+                        console.error('테이블 접근 실패:', error);
+                        
+                        // 테이블이 없는 경우 생성 안내
+                        if (error.code === 'PGRST116' || error.message.includes('relation') || error.message.includes('does not exist')) {
+                            throw new Error('works 테이블이 존재하지 않습니다. Supabase Dashboard에서 테이블을 생성해주세요.');
                         }
                         
-                        if (change.type === 'removed') {
-                            works = works.filter(w => w.id !== workData.id);
-                            renderWorks();
-                        }
-                    });
+                        throw new Error(`테이블 접근 실패: ${error.message}`);
+                    }
                     
-                    updateStats();
-                });
-                console.log('실시간 리스너 설정 완료');
-            } catch (error) {
-                console.error('실시간 리스너 설정 오류:', error);
-            }
-        }
-
-        // 특정 작품의 화면 표시 업데이트
-        function updateWorkDisplay(workId) {
-            const work = works.find(w => w.id === workId);
-            if (!work) return;
-
-            // 카드의 좋아요/조회수 업데이트
-            const likesElement = document.getElementById(`likes-${workId}`);
-            const viewsElement = document.getElementById(`views-${workId}`);
-            const modalLikesElement = document.getElementById(`modal-likes-${workId}`);
-
-            if (likesElement) likesElement.textContent = work.likes || 0;
-            if (viewsElement) viewsElement.textContent = work.views || 0;
-            if (modalLikesElement) modalLikesElement.textContent = work.likes || 0;
-        }
-
-        // 작품 목록 렌더링
-        function renderWorks() {
-            const worksGrid = document.getElementById('worksGrid');
-            
-            let filteredWorks = works.filter(work => {
-                const categoryMatch = currentCategory === 'all' || work.category === currentCategory;
-                return categoryMatch;
-            });
-
-            if (filteredWorks.length === 0) {
-                worksGrid.innerHTML = `
-                    <div class="loading">
-                        ${works.length === 0 ? '📚 작품을 불러오는 중입니다...' : '🔍 해당 분야의 작품이 없습니다.'}
-                    </div>
-                `;
-                return;
+                    this.showConnectionStatus('✅ Supabase 연결 성공!', 'success');
+                    console.log('✅ Supabase 초기화 완료');
+                    
+                    // 실시간 구독 설정
+                    this.setupRealtimeSubscription();
+                    
+                } catch (error) {
+                    console.error('❌ Supabase 초기화 실패:', error);
+                    const errorMessage = error.message || 'Unknown error';
+                    this.showConnectionStatus('❌ Supabase 연결 실패: ' + errorMessage, 'error');
+                    this.loadFromLocalStorage();
+                }
             }
 
-            worksGrid.innerHTML = filteredWorks.map(work => `
-                <div class="work-card" onclick="openModal('${work.id}')">
-                    <div class="work-image ${!work.image ? 'no-image' : ''}">
-                        ${work.image ? 
-                            `<img src="${work.image}" alt="${work.title}" loading="lazy" 
-                                  onerror="this.style.display='none'; this.parentNode.innerHTML='${getCategoryIcon(work.category)}';">` 
-                            : getCategoryIcon(work.category)
+            setupRealtimeSubscription() {
+                // 실시간 변경사항 구독
+                this.supabase
+                    .channel('works_changes')
+                    .on('postgres_changes', 
+                        { event: '*', schema: 'public', table: 'works' }, 
+                        (payload) => {
+                            console.log('실시간 변경사항:', payload);
+                            this.loadWorksFromSupabase();
                         }
-                    </div>
-                    <div class="work-content">
-                        <div class="work-category">${work.category}</div>
-                        <h3 class="work-title">${work.title}</h3>
-                        <p class="work-author">${work.author} (${work.department})</p>
-                        <div class="work-preview">${work.preview || work.content?.substring(0, 100) + '...' || ''}</div>
-                        <div class="work-meta">
-                            <div class="ai-tools">
-                                ${work.aiTools.map(tool => `<span class="ai-tool">${tool}</span>`).join('')}
+                    )
+                    .subscribe();
+            }
+
+            showConnectionStatus(message, type) {
+                const statusDiv = document.getElementById('connectionStatus');
+                const className = type === 'success' ? 'success-message' : 'error-message';
+                statusDiv.innerHTML = `<div class="${className}">${message}</div>`;
+                
+                // 3초 후 메시지 제거
+                setTimeout(() => {
+                    statusDiv.innerHTML = '';
+                }, 3000);
+            }
+
+            async loadWorksFromSupabase() {
+                if (!this.supabase) {
+                    console.log('Supabase를 사용할 수 없습니다. 로컬 데이터를 사용합니다.');
+                    return;
+                }
+
+                try {
+                    this.setLoading(true);
+                    
+                    console.log('📡 Supabase에서 데이터 로드 중...');
+                    const { data, error } = await this.supabase
+                        .from('works')
+                        .select('*')
+                        .order('created_at', { ascending: false });
+                    
+                    if (error) {
+                        console.error('❌ 데이터 로드 에러:', error);
+                        throw new Error(`데이터 로드 실패: ${error.message}`);
+                    }
+                    
+                    this.works = data || [];
+                    this.filteredWorks = [...this.works];
+                    console.log(`✅ ${this.works.length}개 작품을 성공적으로 로드했습니다.`);
+                    
+                    if (this.works.length === 0) {
+                        console.log('📝 데이터베이스가 비어있습니다. 첫 작품을 추가해보세요!');
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Supabase 데이터 로드 실패:', error);
+                    this.showConnectionStatus('❌ 데이터 로드 실패: ' + error.message, 'error');
+                    this.loadFromLocalStorage();
+                } finally {
+                    this.setLoading(false);
+                }
+            }
+
+            loadFromLocalStorage() {
+                const localData = localStorage.getItem('aiContestWorks');
+                if (localData) {
+                    this.works = JSON.parse(localData);
+                    this.filteredWorks = [...this.works];
+                    console.log('로컬 스토리지에서 데이터를 로드했습니다.');
+                } else {
+                    this.works = [];
+                    this.filteredWorks = [];
+                    console.log('데이터가 없습니다.');
+                }
+            }
+
+            async addWork(workData) {
+                if (!this.supabase) {
+                    // Supabase 없을 경우 로컬 스토리지에 저장
+                    const newWork = {
+                        id: Date.now().toString(),
+                        ...workData,
+                        created_at: new Date().toISOString(),
+                        likes: 0,
+                        views: 0
+                    };
+                    this.works.unshift(newWork);
+                    this.saveToLocalStorage();
+                    return newWork;
+                }
+
+                try {
+                    const { data, error } = await this.supabase
+                        .from('works')
+                        .insert([{
+                            ...workData,
+                            likes: 0,
+                            views: 0
+                        }])
+                        .select();
+                    
+                    if (error) {
+                        throw error;
+                    }
+                    
+                    console.log('작품이 Supabase에 추가되었습니다:', data);
+                    this.showConnectionStatus('작품이 성공적으로 등록되었습니다!', 'success');
+                    
+                    // 데이터 새로고침 (실시간 구독이 있지만 즉시 반영을 위해)
+                    await this.loadWorksFromSupabase();
+                    return data[0];
+                    
+                } catch (error) {
+                    console.error('Supabase에 작품 추가 실패:', error);
+                    this.showConnectionStatus('작품 추가 실패: ' + error.message, 'error');
+                    throw error;
+                }
+            }
+
+            async updateWorkStats(workId, field) {
+                if (!this.supabase) {
+                    // 로컬 스토리지 업데이트
+                    const work = this.works.find(w => w.id === workId);
+                    if (work) {
+                        work[field]++;
+                        this.saveToLocalStorage();
+                    }
+                    return;
+                }
+
+                try {
+                    const work = this.works.find(w => w.id === workId);
+                    if (!work) return;
+
+                    const { error } = await this.supabase
+                        .from('works')
+                        .update({ [field]: (work[field] || 0) + 1 })
+                        .eq('id', workId);
+                    
+                    if (error) {
+                        throw error;
+                    }
+                    
+                    // 로컬 데이터도 즉시 업데이트
+                    work[field]++;
+                    
+                } catch (error) {
+                    console.error(`${field} 업데이트 실패:`, error);
+                }
+            }
+
+            saveToLocalStorage() {
+                localStorage.setItem('aiContestWorks', JSON.stringify(this.works));
+            }
+
+            setLoading(isLoading) {
+                this.isLoading = isLoading;
+                if (isLoading) {
+                    const gallery = document.getElementById('gallery');
+                    gallery.innerHTML = `
+                        <div class="empty-state">
+                            <div class="loading"></div>
+                            <h3>데이터를 불러오는 중...</h3>
+                        </div>
+                    `;
+                }
+            }
+
+            setupEventListeners() {
+                // 뷰 토글
+                document.querySelectorAll('.view-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        this.currentView = btn.dataset.view;
+                        this.updateView();
+                    });
+                });
+
+                // 검색 및 필터
+                document.getElementById('searchInput').addEventListener('input', () => this.filterWorks());
+                document.getElementById('categoryFilter').addEventListener('change', () => this.filterWorks());
+                document.getElementById('departmentFilter').addEventListener('change', () => this.filterWorks());
+
+                // 모달 닫기
+                document.getElementById('modal').addEventListener('click', (e) => {
+                    if (e.target.id === 'modal') {
+                        this.closeModal();
+                    }
+                });
+            }
+
+            filterWorks() {
+                const search = document.getElementById('searchInput').value.toLowerCase();
+                const category = document.getElementById('categoryFilter').value;
+                const department = document.getElementById('departmentFilter').value;
+
+                this.filteredWorks = this.works.filter(work => {
+                    const matchesSearch = !search || 
+                        work.title.toLowerCase().includes(search) ||
+                        work.author.toLowerCase().includes(search) ||
+                        (work.content && work.content.toLowerCase().includes(search));
+                    
+                    const matchesCategory = !category || work.category === category;
+                    const matchesDepartment = !department || work.department === department;
+                    
+                    return matchesSearch && matchesCategory && matchesDepartment;
+                });
+
+                this.renderGallery();
+            }
+
+            renderGallery() {
+                const gallery = document.getElementById('gallery');
+                
+                if (this.isLoading) {
+                    return;
+                }
+                
+                if (this.filteredWorks.length === 0) {
+                    gallery.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">🎨</div>
+                            <h3>작품이 없습니다</h3>
+                            <p>첫 번째 AI 작품을 등록해보세요!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                gallery.innerHTML = this.filteredWorks.map(work => `
+                    <div class="gallery-item" onclick="gallery.openModal('${work.id}')">
+                        <div class="item-image">
+                            ${work.image 
+                                ? `<img src="${work.image}" alt="${work.title}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=item-placeholder>🎨</div>'">`
+                                : `<div class="item-placeholder">🎨</div>`
+                            }
+                        </div>
+                        <div class="item-info">
+                            <div class="item-header">
+                                <div>
+                                    <div class="item-title">${work.title}</div>
+                                    <div class="item-author">
+                                        <span class="author-name">${work.author}</span>
+                                        <span class="author-dept">${work.department}</span>
+                                    </div>
+                                </div>
+                                <div class="item-category">${work.category}</div>
                             </div>
-                            <div class="work-actions">
-                                <button class="like-btn" onclick="event.stopPropagation(); toggleLike('${work.id}')">
-                                    <span class="heart" id="heart-${work.id}">❤️</span>
-                                    <span class="like-count" id="likes-${work.id}">${work.likes || 0}</span>
-                                </button>
-                                <span class="views" id="views-${work.id}">👁️ ${work.views || 0}</span>
+                            
+                            <div class="item-content">${work.content || work.preview || ''}</div>
+                            
+                            ${work.ai_tools && work.ai_tools.length > 0 ? `
+                                <div class="item-tools">
+                                    ${work.ai_tools.map(tool => `<span class="tool-tag">${tool}</span>`).join('')}
+                                </div>
+                            ` : ''}
+                            
+                            <div class="item-meta">
+                                <div class="item-date">
+                                    📅 ${work.date || new Date(work.created_at).toLocaleDateString('ko-KR')}
+                                </div>
+                                <div class="item-stats">
+                                    <div class="stat" onclick="event.stopPropagation(); gallery.likeWork('${work.id}')">
+                                        ❤️ ${work.likes || 0}
+                                    </div>
+                                    <div class="stat">
+                                        👁️ ${work.views || 0}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            `).join('');
-
-            updateStats();
-        }
-
-        // 통계 업데이트
-        function updateStats() {
-            const totalWorks = works.length;
-            const departments = new Set(works.map(w => w.department).filter(Boolean));
-            const authors = new Set(works.map(w => w.author).filter(Boolean));
-
-            document.getElementById('totalWorks').textContent = totalWorks;
-            document.getElementById('totalDepartments').textContent = departments.size;
-            document.getElementById('totalAuthors').textContent = authors.size;
-        }
-
-        // 모달 열기
-        window.openModal = function(workId) {
-            const work = works.find(w => w.id === workId);
-            if (!work) return;
-
-            const modal = document.getElementById('workModal');
-            const modalContent = document.getElementById('modalContent');
-            
-            modalContent.innerHTML = `
-                ${work.image ? 
-                    `<div style="text-align: center; margin-bottom: 30px;">
-                        <img src="${work.image}" alt="${work.title}" 
-                             style="max-width: 100%; max-height: 500px; width: auto; height: auto; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-                    </div>` 
-                    : ''
-                }
-                <div class="work-category" style="margin-bottom: 20px;">${work.category}</div>
-                <h2 style="font-size: 2em; margin-bottom: 10px; color: #2c3e50;">${work.title}</h2>
-                <p style="color: #7f8c8d; margin-bottom: 20px; font-size: 1.1em;">${work.author} (${work.department})</p>
-                <div style="margin-bottom: 20px;">
-                    ${work.aiTools.map(tool => `<span class="ai-tool" style="margin-right: 10px;">${tool}</span>`).join('')}
-                </div>
-                <div style="background: #f8f9fa; padding: 30px; border-radius: 15px; margin-bottom: 20px;">
-                    <pre style="white-space: pre-wrap; font-family: 'Noto Sans KR', sans-serif; line-height: 1.8; font-size: 1.1em; color: #333;">${work.content}</pre>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; color: #95a5a6; font-size: 0.9em; border-top: 1px solid #ecf0f1; padding-top: 20px;">
-                    <div style="display: flex; align-items: center; gap: 20px;">
-                        <button class="like-btn" onclick="toggleLike('${work.id}')" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 8px 15px; border-radius: 20px; transition: all 0.3s ease;">
-                            <span class="heart" id="modal-heart-${work.id}" style="font-size: 1.5em;">❤️</span>
-                            <span class="like-count" id="modal-likes-${work.id}" style="font-weight: 600;">${work.likes || 0}</span>
-                        </button>
-                        <span style="display: flex; align-items: center; gap: 5px;">👁️ ${work.views || 0}</span>
-                    </div>
-                    <span>작성일: ${work.date}</span>
-                </div>
-            `;
-            
-            modal.style.display = 'block';
-            
-            // 조회수 증가
-            incrementViews(workId);
-        }
-
-        // 좋아요 토글
-        window.toggleLike = async function(workId) {
-            try {
-                const workRef = db.collection('works').doc(workId);
-                await workRef.update({
-                    likes: firebase.firestore.FieldValue.increment(1)
-                });
-                
-                // 로컬 데이터도 즉시 업데이트 (UI 반응성)
-                const work = works.find(w => w.id === workId);
-                if (work) {
-                    work.likes = (work.likes || 0) + 1;
-                    updateWorkDisplay(workId);
-                    
-                    // 애니메이션 효과
-                    const heartCard = document.getElementById(`heart-${workId}`);
-                    const heartModal = document.getElementById(`modal-heart-${workId}`);
-                    
-                    [heartCard, heartModal].forEach(heart => {
-                        if (heart) {
-                            heart.style.transform = 'scale(1.3)';
-                            setTimeout(() => heart.style.transform = 'scale(1)', 200);
-                        }
-                    });
-                }
-                
-            } catch (error) {
-                console.error('좋아요 업데이트 오류:', error);
-            }
-        }
-
-        // 검색 및 필터링
-        function performSearch() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            
-            let filteredWorks = works.filter(work => {
-                const categoryMatch = currentCategory === 'all' || work.category === currentCategory;
-                const searchMatch = searchTerm === '' || 
-                    work.title?.toLowerCase().includes(searchTerm) || 
-                    work.author?.toLowerCase().includes(searchTerm) ||
-                    work.department?.toLowerCase().includes(searchTerm) ||
-                    work.content?.toLowerCase().includes(searchTerm);
-                
-                return categoryMatch && searchMatch;
-            });
-            
-            const worksGrid = document.getElementById('worksGrid');
-            
-            if (filteredWorks.length === 0) {
-                worksGrid.innerHTML = `
-                    <div class="loading">🔍 검색 결과가 없습니다.</div>
-                `;
-                return;
+                `).join('');
             }
 
-            worksGrid.innerHTML = filteredWorks.map(work => `
-                <div class="work-card" onclick="openModal('${work.id}')">
-                    <div class="work-image ${!work.image ? 'no-image' : ''}">
-                        ${work.image ? 
-                            `<img src="${work.image}" alt="${work.title}" loading="lazy" 
-                                  onerror="this.style.display='none'; this.parentNode.innerHTML='${getCategoryIcon(work.category)}';">` 
-                            : getCategoryIcon(work.category)
-                        }
-                    </div>
-                    <div class="work-content">
-                        <div class="work-category">${work.category}</div>
-                        <h3 class="work-title">${work.title}</h3>
-                        <p class="work-author">${work.author} (${work.department})</p>
-                        <div class="work-preview">${work.preview || work.content?.substring(0, 100) + '...' || ''}</div>
-                        <div class="work-meta">
-                            <div class="ai-tools">
-                                ${work.aiTools.map(tool => `<span class="ai-tool">${tool}</span>`).join('')}
+            async openModal(workId) {
+                const work = this.filteredWorks.find(w => w.id === workId);
+                if (!work) return;
+
+                // 조회수 증가
+                await this.updateWorkStats(work.id, 'views');
+                this.updateStats();
+
+                const modalBody = document.getElementById('modalBody');
+                modalBody.innerHTML = `
+                    ${work.image 
+                        ? `<img class="modal-image" src="${work.image}" alt="${work.title}" onerror="this.style.display='none'">`
+                        : `<div style="height: 200px; background: linear-gradient(45deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; color: white; font-size: 3rem; border-radius: 20px 20px 0 0;">🎨</div>`
+                    }
+                    
+                    <div class="modal-info">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                            <div>
+                                <h2 style="margin-bottom: 0.5rem; color: #333;">${work.title}</h2>
+                                <div style="display: flex; align-items: center; gap: 0.5rem; color: #666; margin-bottom: 1rem;">
+                                    <span style="font-weight: 600; color: #333;">${work.author}</span>
+                                    <span>•</span>
+                                    <span>${work.department}</span>
+                                </div>
                             </div>
-                            <div class="work-actions">
-                                <button class="like-btn" onclick="event.stopPropagation(); toggleLike('${work.id}')">
-                                    <span class="heart" id="heart-${work.id}">❤️</span>
-                                    <span class="like-count" id="likes-${work.id}">${work.likes || 0}</span>
+                            <div class="item-category">${work.category}</div>
+                        </div>
+                        
+                        <div style="color: #666; line-height: 1.6; margin-bottom: 1.5rem;">
+                            ${work.content || work.preview || ''}
+                        </div>
+                        
+                        ${work.ai_tools && work.ai_tools.length > 0 ? `
+                            <div style="margin-bottom: 1.5rem;">
+                                <h4 style="margin-bottom: 0.5rem; color: #333;">사용된 AI 도구:</h4>
+                                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                    ${work.ai_tools.map(tool => `<span class="tool-tag">${tool}</span>`).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid #eee;">
+                            <div style="color: #666;">
+                                📅 ${work.date || new Date(work.created_at).toLocaleDateString('ko-KR')}
+                            </div>
+                            <div style="display: flex; gap: 1rem;">
+                                <button onclick="gallery.likeWork('${work.id}')" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.25rem; color: #e74c3c;">
+                                    ❤️ ${work.likes || 0}
                                 </button>
-                                <span class="views" id="views-${work.id}">👁️ ${work.views || 0}</span>
+                                <div style="display: flex; align-items: center; gap: 0.25rem; color: #666;">
+                                    👁️ ${work.views || 0}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                `;
 
-            updateStats();
+                document.getElementById('modal').classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+
+            async likeWork(workId) {
+                await this.updateWorkStats(workId, 'likes');
+                this.renderGallery();
+                this.updateStats();
+                
+                // 모달이 열려있으면 모달도 업데이트
+                if (document.getElementById('modal').classList.contains('active')) {
+                    this.openModal(workId);
+                }
+            }
+
+            closeModal() {
+                document.getElementById('modal').classList.remove('active');
+                document.body.style.overflow = '';
+            }
+
+            updateStats() {
+                const totalWorks = this.works.length;
+                const totalLikes = this.works.reduce((sum, work) => sum + (work.likes || 0), 0);
+                const totalViews = this.works.reduce((sum, work) => sum + (work.views || 0), 0);
+                
+                // 가장 인기 있는 카테고리 찾기
+                const categoryCount = {};
+                this.works.forEach(work => {
+                    categoryCount[work.category] = (categoryCount[work.category] || 0) + 1;
+                });
+                
+                const popularCategory = Object.keys(categoryCount).reduce((a, b) => 
+                    categoryCount[a] > categoryCount[b] ? a : b, '-'
+                );
+
+                document.getElementById('totalWorks').textContent = totalWorks;
+                document.getElementById('totalLikes').textContent = totalLikes;
+                document.getElementById('totalViews').textContent = totalViews;
+                document.getElementById('popularCategory').textContent = popularCategory;
+            }
+
+            updateView() {
+                const gallery = document.getElementById('gallery');
+                gallery.className = `gallery ${this.currentView}-view`;
+            }
+
+            // 작품 추가 폼
+            showAddForm() {
+                const modalBody = document.getElementById('modalBody');
+                modalBody.innerHTML = `
+                    <div style="padding: 2rem;">
+                        <h2 style="margin-bottom: 1.5rem;">새 작품 등록</h2>
+                        <form id="addWorkForm">
+                            <div style="margin-bottom: 1rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">제목 *</label>
+                                <input type="text" name="title" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; outline: none;">
+                            </div>
+                            
+                            <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                                <div style="flex: 1;">
+                                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">작가명 *</label>
+                                    <input type="text" name="author" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; outline: none;">
+                                </div>
+                                <div style="flex: 1;">
+                                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">부서 *</label>
+                                    <select name="department" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; outline: none;">
+                                        <option value="">부서 선택</option>
+                                        <option value="기획감사실">기획감사실</option>
+                                        <option value="디지털혁신실">디지털혁신실</option>
+                                        <option value="마케팅실">마케팅실</option>
+                                        <option value="개발팀">개발팀</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 1rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">카테고리 *</label>
+                                <select name="category" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; outline: none;">
+                                    <option value="">카테고리 선택</option>
+                                    <option value="이미지">이미지</option>
+                                    <option value="텍스트">텍스트</option>
+                                    <option value="동영상">동영상</option>
+                                    <option value="음성">음성</option>
+                                </select>
+                            </div>
+                            
+                            <div style="margin-bottom: 1rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">이미지 URL</label>
+                                <input type="url" name="image" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; outline: none;" placeholder="https://example.com/image.jpg">
+                            </div>
+                            
+                            <div style="margin-bottom: 1rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">작품 설명 *</label>
+                                <textarea name="content" required rows="4" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; outline: none; resize: vertical;" placeholder="작품에 대한 자세한 설명을 입력해주세요..."></textarea>
+                            </div>
+                            
+                            <div style="margin-bottom: 1rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">작업 날짜</label>
+                                <input type="date" name="date" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; outline: none;" value="${new Date().toISOString().split('T')[0]}">
+                            </div>
+                            
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">사용된 AI 도구 (쉼표로 구분)</label>
+                                <input type="text" name="ai_tools" placeholder="예: ChatGPT, DALL-E, Midjourney" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; outline: none;">
+                                <small style="color: #666; font-size: 0.8rem;">여러 도구를 사용한 경우 쉼표로 구분해서 입력해주세요</small>
+                            </div>
+                            
+                            <div style="display: flex; gap: 1rem;">
+                                <button type="button" onclick="gallery.closeModal()" style="flex: 1; padding: 0.75rem; background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; cursor: pointer;">취소</button>
+                                <button type="submit" style="flex: 1; padding: 0.75rem; background: linear-gradient(45deg, #667eea, #764ba2); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">등록</button>
+                            </div>
+                        </form>
+                    </div>
+                `;
+
+                document.getElementById('addWorkForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.target);
+                    
+                    const aiToolsString = formData.get('ai_tools');
+                    const aiToolsArray = aiToolsString ? 
+                        aiToolsString.split(',').map(tool => tool.trim()).filter(tool => tool) : 
+                        [];
+
+                    const workData = {
+                        title: formData.get('title'),
+                        author: formData.get('author'),
+                        department: formData.get('department'),
+                        category: formData.get('category'),
+                        content: formData.get('content'),
+                        preview: formData.get('content').substring(0, 100) + '...',
+                        image: formData.get('image') || null,
+                        ai_tools: aiToolsArray,
+                        date: formData.get('date') || new Date().toLocaleDateString('ko-KR')
+                    };
+
+                    try {
+                        const submitBtn = e.target.querySelector('button[type="submit"]');
+                        submitBtn.disabled = true;
+                        submitBtn.textContent = '등록 중...';
+
+                        await this.addWork(workData);
+                        this.filterWorks();
+                        this.renderGallery();
+                        this.updateStats();
+                        this.closeModal();
+                        
+                    } catch (error) {
+                        console.error('작품 등록 실패:', error);
+                        alert('작품 등록에 실패했습니다: ' + error.message);
+                    } finally {
+                        const submitBtn = e.target.querySelector('button[type="submit"]');
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = '등록';
+                        }
+                    }
+                });
+
+                document.getElementById('modal').classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
         }
 
-        // 모달 닫기
+        // 전역 함수들
         function closeModal() {
-            document.getElementById('workModal').style.display = 'none';
+            if (window.gallery) {
+                window.gallery.closeModal();
+            }
         }
 
-        // 검색 및 필터링
-        function performSearch() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            
-            let filteredWorks = works.filter(work => {
-                const categoryMatch = currentCategory === 'all' || work.category === currentCategory;
-                const searchMatch = searchTerm === '' || 
-                    work.title?.toLowerCase().includes(searchTerm) || 
-                    work.author?.toLowerCase().includes(searchTerm) ||
-                    work.department?.toLowerCase().includes(searchTerm) ||
-                    work.content?.toLowerCase().includes(searchTerm);
-                
-                return categoryMatch && searchMatch;
-            });
-            
-            const worksGrid = document.getElementById('worksGrid');
-            
-            if (filteredWorks.length === 0) {
-                worksGrid.innerHTML = `
-                    <div class="loading">🔍 검색 결과가 없습니다.</div>
-                `;
-                return;
+        function showAddModal() {
+            if (window.gallery) {
+                window.gallery.showAddForm();
             }
+        }
 
-            worksGrid.innerHTML = filteredWorks.map(work => `
-                <div class="work-card" onclick="openModal('${work.id}')">
-                    <div class="work-image ${!work.image ? 'no-image' : ''}">
-                        ${work.image ? 
-                            `<img src="${work.image}" alt="${work.title}" loading="lazy" 
-                                  onerror="this.style.display='none'; this.parentNode.innerHTML='${getCategoryIcon(work.category)}';">` 
-                            : getCategoryIcon(work.category)
-                        }
-                    </div>
-                    <div class="work-content">
-                        <div class="work-category">${work.category}</div>
-                        <h3 class="work-title">${work.title}</h3>
-                        <p class="work-author">${work.author} (${work.department})</p>
-                        <div class="work-preview">${work.preview || work.content?.substring(0, 100) + '...' || ''}</div>
-                        <div class="work-meta">
-                            <div class="ai-tools">
-                                ${work.aiTools.map(tool => `<span class="ai-tool">${tool}</span>`).join('')}
-                            </div>
-                            <div class="work-actions">
-                                <button class="like-btn" onclick="event.stopPropagation(); toggleLike('${work.id}')">
-                                    <span class="heart" id="heart-${work.id}">❤️</span>
+        // 페이지 로드 시 갤러리 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            // Supabase 라이브러리 로드 확인
+            console.log('Supabase 전역 객체 확인:', typeof window.supabase, typeof supabase);
+            
+            if (typeof window.supabase === 'undefined' && typeof supabase === 'undefined') {
+                console.error('Supabase JS 라이브러리가 로드되지 않았습니다.');
+                document.getElementById('connectionStatus').innerHTML = 
+                    '<div class="error-message">❌ Supabase 라이브러리 로드 실패. 로컬 모드로 실행됩니다.<br><small>네트워크 연결을 확인하거나 페이지를 새로고침해보세요.</small></div>';
+            } else {
+                console.log('✅ Supabase 라이브러리 로드 성공');
+            }
+            
+            window.gallery = new AIContestGallery();
+        });
+
+        // 키보드 단축키
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && window.gallery) {
+                window.gallery.closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
