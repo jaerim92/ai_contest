@@ -75,6 +75,13 @@
             opacity: 0.9;
         }
 
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+
         .category-nav {
             display: flex;
             justify-content: center;
@@ -106,10 +113,6 @@
             background: linear-gradient(45deg, #e74c3c, #c0392b);
             color: white;
             transform: translateY(-3px);
-        }
-
-        .filter-options {
-            display: none;
         }
 
         .search-container {
@@ -168,14 +171,6 @@
             height: 100%;
             object-fit: cover;
             transition: transform 0.3s ease;
-        }
-
-        .work-image img[src*="github"] {
-            background: #f8f9fa;
-        }
-
-        .work-image img:not([src]), .work-image img[src=""] {
-            display: none;
         }
 
         .work-card:hover .work-image img {
@@ -289,10 +284,6 @@
             transition: all 0.3s ease;
         }
 
-        .liked .heart {
-            transform: scale(1.2);
-        }
-
         .views {
             display: flex;
             align-items: center;
@@ -390,15 +381,15 @@
             <p>직원들의 창의적인 AI 활용 작품을 만나보세요</p>
             <div class="stats">
                 <div class="stat-item">
-                    <span class="stat-number" id="totalWorks">4</span>
+                    <span class="stat-number" id="totalWorks">-</span>
                     <span class="stat-label">총 작품수</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-number">4</span>
+                    <span class="stat-number" id="totalDepartments">-</span>
                     <span class="stat-label">참여 부서</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-number">4</span>
+                    <span class="stat-number" id="totalAuthors">-</span>
                     <span class="stat-label">참여 직원</span>
                 </div>
             </div>
@@ -412,14 +403,12 @@
             <button class="category-btn" data-category="노래">노래 (Song)</button>
         </div>
 
-
-
         <div class="search-container">
             <input type="text" id="searchInput" class="search-input" placeholder="작품 제목이나 작가명으로 검색하세요...">
         </div>
 
         <div class="works-grid" id="worksGrid">
-            <!-- 작품들이 JavaScript로 동적 생성됩니다 -->
+            <div class="loading">📚 작품을 불러오는 중입니다...</div>
         </div>
     </div>
 
@@ -432,69 +421,35 @@
         </div>
     </div>
 
-    <script>
-        // 실제 출품작 포함 샘플 데이터
-        const works = [
-            {
-                id: 1,
-                title: "북항에서 레포츠를 즐기는 갈매기",
-                author: "최한나 (기획감사실)",
-                category: "이미지",
-                preview: "태양 아래 선글라스를 이마에 올린 채 패들보드를 타며 역동적인 에너지를 뿜어냅니다. 부산 북항의 드넓은 바다와 다리, 유람선, 그리고 여름의 활기찬 공기가 함께 어우러져...",
-                content: "태양 아래 선글라스를 이마에 올린 채 패들보드를 타며 역동적인 에너지를 뿜어냅니다. 부산 북항의 드넓은 바다와 다리, 유람선, 그리고 여름의 활기찬 공기가 함께 어우러져 '레포츠의 도시, 동구'를 상징적으로 표현했습니다.\n\n이 작품은 부산 동구의 해양 스포츠 문화와 활기찬 에너지를 갈매기라는 친숙한 캐릭터를 통해 표현한 AI 이미지 생성 작품입니다. 북항의 실제 풍경을 배경으로 하여 지역의 정체성과 현대적인 레포츠 문화가 조화롭게 어우러진 모습을 담았습니다.",
-                aiTools: ["AI 이미지 생성"],
-                date: "2024-08-19",
-                views: 45,
-                likes: 12,
-                image: "https://raw.githubusercontent.com/jaerim92/ai_contest/main/%EC%B6%9C%ED%92%881(%EC%B5%9C%ED%95%9C%EB%82%98).png",
-                imageDescription: "북항에서 패들보드를 즐기는 갈매기 캐릭터"
-            },
-            {
-                id: 2,
-                title: "디지털 시대의 향수",
-                author: "김민수 (기획예산과)",
-                category: "시",
-                preview: "키보드 소리가 울려 퍼지는\n사무실 한 켠에서\nAI와 함께 써내려가는\n새로운 시대의 이야기...",
-                content: "키보드 소리가 울려 퍼지는\n사무실 한 켠에서\nAI와 함께 써내려가는\n새로운 시대의 이야기\n\n과거의 펜과 종이는\n이제 화면 속 글자가 되고\n생각은 알고리즘과 만나\n예상치 못한 시를 낳는다\n\n인공지능이 제안하는\n단어들 사이로\n여전히 흐르는 것은\n인간의 따뜻한 감성\n\n기술은 도구일 뿐\n진정한 창작의 힘은\n여전히 우리 마음 속에\n살아 숨쉬고 있다",
-                aiTools: ["ChatGPT", "Claude"],
-                date: "2024-08-15",
-                views: 127,
-                likes: 8,
-                image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=300&fit=crop",
-                imageDescription: "키보드와 디지털 화면이 조화를 이루는 모습"
-            },
-            {
-                id: 3,
-                title: "동구청 로봇 직원 이야기",
-                author: "박영희 (민원봉사과)",
-                category: "소설",
-                preview: "2030년 동구청에 새로운 직원이 왔다. 이름은 '동동이', 최첨단 AI 로봇이었다. 첫날부터 민원인들의 관심을 한 몸에 받았지만...",
-                content: "2030년 동구청에 새로운 직원이 왔다. 이름은 '동동이', 최첨단 AI 로봇이었다.\n\n첫날부터 민원인들의 관심을 한 몸에 받았던 동동이는 완벽한 업무 처리로 모든 이의 찬사를 받았다. 하지만 시간이 지날수록 동동이는 고민에 빠졌다.\n\n'나는 정말 이 일을 사랑하고 있는 걸까?'\n\n어느 날 한 할머니가 찾아왔다. 복잡한 서류 때문이 아니라, 단지 말 상대가 필요해서였다. 동동이는 규정에 없는 이 상황에 당황했지만, 할머니의 외로운 눈빛을 보며 무언가를 깨달았다.\n\n그날 이후 동동이는 변했다. 단순한 업무 처리를 넘어, 사람들의 마음을 읽고 공감하려 노력했다. AI 로봇이지만 진정한 '사람을 위한 행정'이 무엇인지 알아가며 성장하는 이야기.",
-                aiTools: ["Gemini"],
-                date: "2024-08-14",
-                views: 89,
-                likes: 15,
-                image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop",
-                imageDescription: "미래적인 로봇과 사무실 환경"
-            },
-            {
-                id: 4,
-                title: "동구청 찬가",
-                author: "최민준 (총무과)",
-                category: "노래",
-                preview: "AI 작곡 도구로 만든 동구청 직원들을 위한 응원가입니다. 밝고 희망찬 멜로디와 함께 우리의 일상과 꿈을 담았습니다...",
-                content: "🎵 동구청 찬가 🎵\n\n[1절]\n아침 햇살 받으며 출근하는 길\n시민들의 웃음소리 들려오네\n오늘도 우리는 최선을 다해\n따뜻한 행정 서비스로\n\n[후렴]\n동구여 영원하라 우리의 터전\nAI와 함께 만드는 새로운 내일\n정성과 기술이 하나 되어\n더 나은 세상을 만들어가네\n\n[2절]\n민원실에서 만나는 할머니의 미소\n컴퓨터 화면 속 데이터들도\n모두 소중한 이야기들\n우리가 지켜가는 보물들\n\n[후렴 반복]\n\n※ 이 노래는 AI 작곡 프로그램 'Suno'와 'AIVA'를 활용하여 멜로디를 생성하고, 가사는 직원들의 일상 이야기를 바탕으로 창작했습니다.",
-                aiTools: ["Suno", "AIVA"],
-                date: "2024-08-10",
-                views: 156,
-                likes: 22,
-                image: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop",
-                imageDescription: "음악과 AI가 만나는 창작의 순간"
-            }
-        ];
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
+    
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+        import { getFirestore, collection, getDocs, doc, updateDoc, onSnapshot, increment, query, orderBy } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyD7E_cvY0alSd-_tvOXTWSSv8FUM_u0k4g",
+            authDomain: "bsdonggu-ai-contest.firebaseapp.com",
+            databaseURL: "https://bsdonggu-ai-contest-default-rtdb.firebaseio.com",
+            projectId: "bsdonggu-ai-contest",
+            storageBucket: "bsdonggu-ai-contest.firebasestorage.app",
+            messagingSenderId: "546475657103",
+            appId: "1:546475657103:web:5858b99fc00460655eadfa",
+            measurementId: "G-JJRK6F43S9"
+        };
+
+        // Firebase 초기화
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // 전역 변수
+        let works = [];
         let currentCategory = 'all';
 
+        // 카테고리 아이콘
         function getCategoryIcon(category) {
             const icons = {
                 '시': '📝',
@@ -505,6 +460,109 @@
             return icons[category] || '📄';
         }
 
+        // Firebase에서 모든 작품 로드
+        async function loadWorksFromFirebase() {
+            try {
+                console.log('Firebase에서 작품 데이터 로드 중...');
+                const worksRef = collection(db, 'works');
+                const q = query(worksRef, orderBy('createdAt', 'desc'));
+                const snapshot = await getDocs(q);
+                
+                works = [];
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    works.push({
+                        id: doc.id,
+                        ...data,
+                        // 배열 데이터 처리
+                        aiTools: Array.isArray(data.tools) ? data.tools : [data.tools || 'AI'],
+                        // 기본값 설정
+                        likes: data.likes || 0,
+                        views: data.views || 0,
+                        // 날짜 처리
+                        createdAt: data.createdAt ? data.createdAt.toDate() : new Date(),
+                        date: data.date || new Date().toISOString().split('T')[0]
+                    });
+                });
+
+                console.log(`${works.length}개 작품 로드 완료`);
+                renderWorks();
+                updateStats();
+                setupRealtimeListener();
+                
+            } catch (error) {
+                console.error('작품 로드 오류:', error);
+                document.getElementById('worksGrid').innerHTML = `
+                    <div class="loading" style="color: #e74c3c;">
+                        ⚠️ 작품을 불러오는 중 오류가 발생했습니다.<br>
+                        잠시 후 다시 시도해주세요.
+                    </div>
+                `;
+            }
+        }
+
+        // 실시간 업데이트 리스너
+        function setupRealtimeListener() {
+            try {
+                const worksRef = collection(db, 'works');
+                onSnapshot(worksRef, (snapshot) => {
+                    snapshot.docChanges().forEach((change) => {
+                        const workData = { id: change.doc.id, ...change.doc.data() };
+                        
+                        if (change.type === 'added' || change.type === 'modified') {
+                            const existingIndex = works.findIndex(w => w.id === workData.id);
+                            
+                            if (existingIndex >= 0) {
+                                // 기존 작품 업데이트
+                                works[existingIndex] = {
+                                    ...works[existingIndex],
+                                    ...workData,
+                                    aiTools: Array.isArray(workData.tools) ? workData.tools : [workData.tools || 'AI']
+                                };
+                            } else {
+                                // 새 작품 추가
+                                works.push({
+                                    ...workData,
+                                    aiTools: Array.isArray(workData.tools) ? workData.tools : [workData.tools || 'AI'],
+                                    likes: workData.likes || 0,
+                                    views: workData.views || 0
+                                });
+                            }
+                            
+                            // 화면 업데이트
+                            updateWorkDisplay(workData.id);
+                        }
+                        
+                        if (change.type === 'removed') {
+                            works = works.filter(w => w.id !== workData.id);
+                            renderWorks();
+                        }
+                    });
+                    
+                    updateStats();
+                });
+                console.log('실시간 리스너 설정 완료');
+            } catch (error) {
+                console.error('실시간 리스너 설정 오류:', error);
+            }
+        }
+
+        // 특정 작품의 화면 표시 업데이트
+        function updateWorkDisplay(workId) {
+            const work = works.find(w => w.id === workId);
+            if (!work) return;
+
+            // 카드의 좋아요/조회수 업데이트
+            const likesElement = document.getElementById(`likes-${workId}`);
+            const viewsElement = document.getElementById(`views-${workId}`);
+            const modalLikesElement = document.getElementById(`modal-likes-${workId}`);
+
+            if (likesElement) likesElement.textContent = work.likes || 0;
+            if (viewsElement) viewsElement.textContent = work.views || 0;
+            if (modalLikesElement) modalLikesElement.textContent = work.likes || 0;
+        }
+
+        // 작품 목록 렌더링
         function renderWorks() {
             const worksGrid = document.getElementById('worksGrid');
             
@@ -513,45 +571,61 @@
                 return categoryMatch;
             });
 
+            if (filteredWorks.length === 0) {
+                worksGrid.innerHTML = `
+                    <div class="loading">
+                        ${works.length === 0 ? '📚 작품을 불러오는 중입니다...' : '🔍 해당 분야의 작품이 없습니다.'}
+                    </div>
+                `;
+                return;
+            }
+
             worksGrid.innerHTML = filteredWorks.map(work => `
-                <div class="work-card" onclick="openModal(${work.id})">
+                <div class="work-card" onclick="openModal('${work.id}')">
                     <div class="work-image ${!work.image ? 'no-image' : ''}">
                         ${work.image ? 
                             `<img src="${work.image}" alt="${work.title}" loading="lazy" 
-                                  onerror="this.style.display='none'; this.parentNode.innerHTML='${getCategoryIcon(work.category)}';">
-                             <div class="image-overlay">${work.imageDescription || ''}</div>` 
+                                  onerror="this.style.display='none'; this.parentNode.innerHTML='${getCategoryIcon(work.category)}';">` 
                             : getCategoryIcon(work.category)
                         }
                     </div>
                     <div class="work-content">
                         <div class="work-category">${work.category}</div>
                         <h3 class="work-title">${work.title}</h3>
-                        <p class="work-author">${work.author}</p>
-                        <div class="work-preview">${work.preview}</div>
+                        <p class="work-author">${work.author} (${work.department})</p>
+                        <div class="work-preview">${work.preview || work.content?.substring(0, 100) + '...' || ''}</div>
                         <div class="work-meta">
                             <div class="ai-tools">
                                 ${work.aiTools.map(tool => `<span class="ai-tool">${tool}</span>`).join('')}
                             </div>
                             <div class="work-actions">
-                                <button class="like-btn" onclick="event.stopPropagation(); toggleLike(${work.id})">
+                                <button class="like-btn" onclick="event.stopPropagation(); toggleLike('${work.id}')">
                                     <span class="heart" id="heart-${work.id}">❤️</span>
                                     <span class="like-count" id="likes-${work.id}">${work.likes || 0}</span>
                                 </button>
-                                <span class="views">👁️ ${work.views}</span>
+                                <span class="views" id="views-${work.id}">👁️ ${work.views || 0}</span>
                             </div>
                         </div>
                     </div>
                 </div>
             `).join('');
 
-            updateStats(filteredWorks.length);
+            updateStats();
         }
 
-        function updateStats(filteredCount) {
-            document.getElementById('totalWorks').textContent = filteredCount;
+        // 통계 업데이트
+        function updateStats() {
+            const totalWorks = works.length;
+            const departments = new Set(works.map(w => w.department).filter(Boolean));
+            const authors = new Set(works.map(w => w.author).filter(Boolean));
+
+            document.getElementById('totalWorks').textContent = totalWorks;
+            document.getElementById('totalDepartments').textContent = departments.size;
+            document.getElementById('totalAuthors').textContent = authors.size;
         }
 
-        function openModal(workId) {
+        // 모달 열기
+        window.openModal = function(workId) {
             const work = works.find(w => w.id === workId);
             if (!work) return;
 
@@ -563,13 +637,12 @@
                     `<div style="text-align: center; margin-bottom: 30px;">
                         <img src="${work.image}" alt="${work.title}" 
                              style="max-width: 100%; max-height: 500px; width: auto; height: auto; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-                        ${work.imageDescription ? `<p style="color: #7f8c8d; font-size: 0.9em; margin-top: 15px; font-style: italic;">${work.imageDescription}</p>` : ''}
                     </div>` 
                     : ''
                 }
                 <div class="work-category" style="margin-bottom: 20px;">${work.category}</div>
                 <h2 style="font-size: 2em; margin-bottom: 10px; color: #2c3e50;">${work.title}</h2>
-                <p style="color: #7f8c8d; margin-bottom: 20px; font-size: 1.1em;">${work.author}</p>
+                <p style="color: #7f8c8d; margin-bottom: 20px; font-size: 1.1em;">${work.author} (${work.department})</p>
                 <div style="margin-bottom: 20px;">
                     ${work.aiTools.map(tool => `<span class="ai-tool" style="margin-right: 10px;">${tool}</span>`).join('')}
                 </div>
@@ -578,11 +651,11 @@
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; color: #95a5a6; font-size: 0.9em; border-top: 1px solid #ecf0f1; padding-top: 20px;">
                     <div style="display: flex; align-items: center; gap: 20px;">
-                        <button class="like-btn" onclick="toggleLike(${work.id})" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 8px 15px; border-radius: 20px; transition: all 0.3s ease;">
+                        <button class="like-btn" onclick="toggleLike('${work.id}')" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 8px 15px; border-radius: 20px; transition: all 0.3s ease;">
                             <span class="heart" id="modal-heart-${work.id}" style="font-size: 1.5em;">❤️</span>
                             <span class="like-count" id="modal-likes-${work.id}" style="font-weight: 600;">${work.likes || 0}</span>
                         </button>
-                        <span style="display: flex; align-items: center; gap: 5px;">👁️ ${work.views}</span>
+                        <span style="display: flex; align-items: center; gap: 5px;">👁️ ${work.views || 0}</span>
                     </div>
                     <span>작성일: ${work.date}</span>
                 </div>
@@ -591,219 +664,94 @@
             modal.style.display = 'block';
             
             // 조회수 증가
-            work.views++;
+            incrementViews(workId);
         }
 
-        // Firebase에서 좋아요 데이터 로드
-        async function loadLikesFromFirebase() {
-            if (!firebaseInitialized || !db) {
-                console.log('Firebase 초기화되지 않음, 기본값 사용');
-                renderWorks();
-                return;
-            }
-
+        // 좋아요 토글
+        window.toggleLike = async function(workId) {
             try {
-                console.log('Firebase에서 데이터 로드 중...');
-                for (const work of works) {
-                    const docRef = db.collection('works').doc(work.id.toString());
-                    const doc = await docRef.get();
-                    
-                    if (doc.exists) {
-                        const data = doc.data();
-                        work.likes = data.likes || 0;
-                        work.views = data.views || 0;
-                        console.log(`작품 ${work.id}: likes=${work.likes}, views=${work.views}`);
-                    } else {
-                        // 문서가 없으면 초기 데이터 생성
-                        console.log(`작품 ${work.id} 초기 데이터 생성`);
-                        await docRef.set({
-                            likes: work.likes || 0,
-                            views: work.views || 0
-                        });
-                    }
-                }
-                renderWorks(); // 화면 업데이트
-                console.log('Firebase 데이터 로드 완료');
-            } catch (error) {
-                console.error('Firebase 데이터 로드 오류:', error);
-                renderWorks(); // 오류시에도 화면 표시
-            }
-        }
-
-        // Firebase에 좋아요 데이터 저장
-        async function saveLikesToFirebase(workId, likes, views) {
-            if (!firebaseInitialized || !db) {
-                console.log('Firebase 사용 불가, 로컬에만 저장');
-                return;
-            }
-
-            try {
-                await db.collection('works').doc(workId.toString()).set({
-                    likes: likes,
-                    views: views
+                const workRef = doc(db, 'works', workId);
+                await updateDoc(workRef, {
+                    likes: increment(1)
                 });
-                console.log(`작품 ${workId} 데이터 저장 완료: likes=${likes}`);
-            } catch (error) {
-                console.error('Firebase 데이터 저장 오류:', error);
-            }
-        }
-
-        // 실시간 데이터 변경 감지
-        function setupRealtimeListener() {
-            if (!firebaseInitialized || !db) {
-                console.log('Firebase 사용 불가, 실시간 업데이트 비활성화');
-                return;
-            }
-
-            try {
-                db.collection('works').onSnapshot((snapshot) => {
-                    snapshot.docChanges().forEach((change) => {
-                        if (change.type === 'modified') {
-                            const workId = parseInt(change.doc.id);
-                            const data = change.doc.data();
-                            const work = works.find(w => w.id === workId);
-                            
-                            if (work) {
-                                work.likes = data.likes || 0;
-                                work.views = data.views || 0;
-                                
-                                // 화면 업데이트
-                                const heartCard = document.getElementById(`heart-${workId}`);
-                                const likesCard = document.getElementById(`likes-${workId}`);
-                                const heartModal = document.getElementById(`modal-heart-${workId}`);
-                                const likesModal = document.getElementById(`modal-likes-${workId}`);
-                                
-                                if (likesCard) likesCard.textContent = work.likes;
-                                if (likesModal) likesModal.textContent = work.likes;
-                                
-                                console.log(`작품 ${workId} 실시간 업데이트: likes=${work.likes}`);
-                            }
+                
+                // 로컬 데이터도 즉시 업데이트 (UI 반응성)
+                const work = works.find(w => w.id === workId);
+                if (work) {
+                    work.likes = (work.likes || 0) + 1;
+                    updateWorkDisplay(workId);
+                    
+                    // 애니메이션 효과
+                    const heartCard = document.getElementById(`heart-${workId}`);
+                    const heartModal = document.getElementById(`modal-heart-${workId}`);
+                    
+                    [heartCard, heartModal].forEach(heart => {
+                        if (heart) {
+                            heart.style.transform = 'scale(1.3)';
+                            setTimeout(() => heart.style.transform = 'scale(1)', 200);
                         }
                     });
-                });
-                console.log('실시간 리스너 설정 완료');
+                }
+                
             } catch (error) {
-                console.error('실시간 리스너 설정 오류:', error);
+                console.error('좋아요 업데이트 오류:', error);
             }
         }
 
-        // 좋아요 기능 (Firebase 연동)
-        async function toggleLike(workId) {
-            const work = works.find(w => w.id === workId);
-            if (!work) return;
-
-            const heartCard = document.getElementById(`heart-${workId}`);
-            const likesCard = document.getElementById(`likes-${workId}`);
-            const heartModal = document.getElementById(`modal-heart-${workId}`);
-            const likesModal = document.getElementById(`modal-likes-${workId}`);
-            
-            // 좋아요 수 증가
-            work.likes = (work.likes || 0) + 1;
-            
-            // 화면 즉시 업데이트
-            if (likesCard) likesCard.textContent = work.likes;
-            if (likesModal) likesModal.textContent = work.likes;
-            
-            // 애니메이션 효과
-            if (heartCard) {
-                heartCard.style.transform = 'scale(1.3)';
-                setTimeout(() => heartCard.style.transform = 'scale(1)', 200);
+        // 조회수 증가
+        async function incrementViews(workId) {
+            try {
+                const workRef = doc(db, 'works', workId);
+                await updateDoc(workRef, {
+                    views: increment(1)
+                });
+            } catch (error) {
+                console.error('조회수 업데이트 오류:', error);
             }
-            if (heartModal) {
-                heartModal.style.transform = 'scale(1.3)';
-                setTimeout(() => heartModal.style.transform = 'scale(1)', 200);
-            }
-            
-            // Firebase에 저장 (실시간 동기화)
-            await saveLikesToFirebase(workId, work.likes, work.views);
         }
 
-        function closeModal() {
-            document.getElementById('workModal').style.display = 'none';
-        }
-
+        // 검색 및 필터링
         function performSearch() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             
             let filteredWorks = works.filter(work => {
                 const categoryMatch = currentCategory === 'all' || work.category === currentCategory;
                 const searchMatch = searchTerm === '' || 
-                    work.title.toLowerCase().includes(searchTerm) || 
-                    work.author.toLowerCase().includes(searchTerm) ||
-                    work.content.toLowerCase().includes(searchTerm);
+                    work.title?.toLowerCase().includes(searchTerm) || 
+                    work.author?.toLowerCase().includes(searchTerm) ||
+                    work.department?.toLowerCase().includes(searchTerm) ||
+                    work.content?.toLowerCase().includes(searchTerm);
                 
                 return categoryMatch && searchMatch;
             });
             
             const worksGrid = document.getElementById('worksGrid');
+            
+            if (filteredWorks.length === 0) {
+                worksGrid.innerHTML = `
+                    <div class="loading">🔍 검색 결과가 없습니다.</div>
+                `;
+                return;
+            }
+
             worksGrid.innerHTML = filteredWorks.map(work => `
-                <div class="work-card" onclick="openModal(${work.id})">
+                <div class="work-card" onclick="openModal('${work.id}')">
                     <div class="work-image ${!work.image ? 'no-image' : ''}">
                         ${work.image ? 
-                            `<img src="${work.image}" alt="${work.title}" loading="lazy">
-                             <div class="image-overlay">${work.imageDescription || ''}</div>` 
+                            `<img src="${work.image}" alt="${work.title}" loading="lazy" 
+                                  onerror="this.style.display='none'; this.parentNode.innerHTML='${getCategoryIcon(work.category)}';">` 
                             : getCategoryIcon(work.category)
                         }
                     </div>
                     <div class="work-content">
                         <div class="work-category">${work.category}</div>
                         <h3 class="work-title">${work.title}</h3>
-                        <p class="work-author">${work.author}</p>
-                        <div class="work-preview">${work.preview}</div>
+                        <p class="work-author">${work.author} (${work.department})</p>
+                        <div class="work-preview">${work.preview || work.content?.substring(0, 100) + '...' || ''}</div>
                         <div class="work-meta">
                             <div class="ai-tools">
                                 ${work.aiTools.map(tool => `<span class="ai-tool">${tool}</span>`).join('')}
                             </div>
-                            <div class="work-date">${work.date}</div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-
-            updateStats(filteredWorks.length);
-        }
-
-        // 이벤트 리스너
-        document.addEventListener('DOMContentLoaded', function() {
-            // 기본 렌더링 먼저 수행
-            renderWorks();
-            
-            // Firebase 초기화 시도
-            waitForFirebase();
-            
-            // 카테고리 버튼 클릭
-            document.querySelectorAll('.category-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    currentCategory = this.dataset.category;
-                    performSearch(); // 검색과 필터를 통합
-                });
-            });
-
-            // 필터 버튼 클릭 (제거됨)
-
-            // 검색 입력
-            document.getElementById('searchInput').addEventListener('input', performSearch);
-
-            // 모달 닫기
-            document.querySelector('.close-btn').addEventListener('click', closeModal);
-            document.getElementById('workModal').addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeModal();
-                }
-            });
-
-            // ESC 키로 모달 닫기
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    closeModal();
-                }
-            });
-
-            // 초기 렌더링
-            renderWorks();
-        });
-    </script>
-</body>
-</html>
+                            <div class="work-actions">
+                                <button class="like-btn" onclick="event.stopPropagation(); toggleLike('${work.id}')">
+                                    <span class="heart" id="heart-${work.id}">❤️</span>
