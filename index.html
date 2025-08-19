@@ -446,7 +446,7 @@
                 date: "2024-08-19",
                 views: 45,
                 likes: 12,
-                image: "https://raw.githubusercontent.com/jaerim92/ai_contest/main/test1.png",
+                image: "https://raw.githubusercontent.com/jaerim92/ai_contest/main/%EC%B6%9C%ED%92%881(%EC%B5%9C%ED%95%9C%EB%82%98).png",
                 imageDescription: "북항에서 패들보드를 즐기는 갈매기 캐릭터"
             },
             {
@@ -534,7 +534,7 @@
                             </div>
                             <div class="work-actions">
                                 <button class="like-btn" onclick="event.stopPropagation(); toggleLike(${work.id})">
-                                    <span class="heart" id="heart-${work.id}">🤍</span>
+                                    <span class="heart" id="heart-${work.id}">❤️</span>
                                     <span class="like-count" id="likes-${work.id}">${work.likes || 0}</span>
                                 </button>
                                 <span class="views">👁️ ${work.views}</span>
@@ -579,7 +579,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; color: #95a5a6; font-size: 0.9em; border-top: 1px solid #ecf0f1; padding-top: 20px;">
                     <div style="display: flex; align-items: center; gap: 20px;">
                         <button class="like-btn" onclick="toggleLike(${work.id})" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 8px 15px; border-radius: 20px; transition: all 0.3s ease;">
-                            <span class="heart" id="modal-heart-${work.id}" style="font-size: 1.5em;">🤍</span>
+                            <span class="heart" id="modal-heart-${work.id}" style="font-size: 1.5em;">❤️</span>
                             <span class="like-count" id="modal-likes-${work.id}" style="font-weight: 600;">${work.likes || 0}</span>
                         </button>
                         <span style="display: flex; align-items: center; gap: 5px;">👁️ ${work.views}</span>
@@ -594,8 +594,101 @@
             work.views++;
         }
 
-        // 좋아요 기능
-        function toggleLike(workId) {
+        // Firebase에서 좋아요 데이터 로드
+        async function loadLikesFromFirebase() {
+            if (!firebaseInitialized || !db) {
+                console.log('Firebase 초기화되지 않음, 기본값 사용');
+                renderWorks();
+                return;
+            }
+
+            try {
+                console.log('Firebase에서 데이터 로드 중...');
+                for (const work of works) {
+                    const docRef = db.collection('works').doc(work.id.toString());
+                    const doc = await docRef.get();
+                    
+                    if (doc.exists) {
+                        const data = doc.data();
+                        work.likes = data.likes || 0;
+                        work.views = data.views || 0;
+                        console.log(`작품 ${work.id}: likes=${work.likes}, views=${work.views}`);
+                    } else {
+                        // 문서가 없으면 초기 데이터 생성
+                        console.log(`작품 ${work.id} 초기 데이터 생성`);
+                        await docRef.set({
+                            likes: work.likes || 0,
+                            views: work.views || 0
+                        });
+                    }
+                }
+                renderWorks(); // 화면 업데이트
+                console.log('Firebase 데이터 로드 완료');
+            } catch (error) {
+                console.error('Firebase 데이터 로드 오류:', error);
+                renderWorks(); // 오류시에도 화면 표시
+            }
+        }
+
+        // Firebase에 좋아요 데이터 저장
+        async function saveLikesToFirebase(workId, likes, views) {
+            if (!firebaseInitialized || !db) {
+                console.log('Firebase 사용 불가, 로컬에만 저장');
+                return;
+            }
+
+            try {
+                await db.collection('works').doc(workId.toString()).set({
+                    likes: likes,
+                    views: views
+                });
+                console.log(`작품 ${workId} 데이터 저장 완료: likes=${likes}`);
+            } catch (error) {
+                console.error('Firebase 데이터 저장 오류:', error);
+            }
+        }
+
+        // 실시간 데이터 변경 감지
+        function setupRealtimeListener() {
+            if (!firebaseInitialized || !db) {
+                console.log('Firebase 사용 불가, 실시간 업데이트 비활성화');
+                return;
+            }
+
+            try {
+                db.collection('works').onSnapshot((snapshot) => {
+                    snapshot.docChanges().forEach((change) => {
+                        if (change.type === 'modified') {
+                            const workId = parseInt(change.doc.id);
+                            const data = change.doc.data();
+                            const work = works.find(w => w.id === workId);
+                            
+                            if (work) {
+                                work.likes = data.likes || 0;
+                                work.views = data.views || 0;
+                                
+                                // 화면 업데이트
+                                const heartCard = document.getElementById(`heart-${workId}`);
+                                const likesCard = document.getElementById(`likes-${workId}`);
+                                const heartModal = document.getElementById(`modal-heart-${workId}`);
+                                const likesModal = document.getElementById(`modal-likes-${workId}`);
+                                
+                                if (likesCard) likesCard.textContent = work.likes;
+                                if (likesModal) likesModal.textContent = work.likes;
+                                
+                                console.log(`작품 ${workId} 실시간 업데이트: likes=${work.likes}`);
+                            }
+                        }
+                    });
+                });
+                console.log('실시간 리스너 설정 완료');
+            } catch (error) {
+                console.error('실시간 리스너 설정 오류:', error);
+            }
+        }
+
+        // 좋아요 기능 (Firebase 연동)
+        async function toggleLike(workId) {
             const work = works.find(w => w.id === workId);
             if (!work) return;
 
@@ -604,36 +697,25 @@
             const heartModal = document.getElementById(`modal-heart-${workId}`);
             const likesModal = document.getElementById(`modal-likes-${workId}`);
             
-            // 좋아요 상태 토글
-            if (!work.isLiked) {
-                work.likes = (work.likes || 0) + 1;
-                work.isLiked = true;
-                
-                // 하트 색상 변경
-                if (heartCard) heartCard.textContent = '❤️';
-                if (heartModal) heartModal.textContent = '❤️';
-                
-                // 애니메이션 효과
-                if (heartCard) {
-                    heartCard.style.transform = 'scale(1.3)';
-                    setTimeout(() => heartCard.style.transform = 'scale(1)', 200);
-                }
-                if (heartModal) {
-                    heartModal.style.transform = 'scale(1.3)';
-                    setTimeout(() => heartModal.style.transform = 'scale(1)', 200);
-                }
-            } else {
-                work.likes = Math.max(0, work.likes - 1);
-                work.isLiked = false;
-                
-                // 하트 색상 변경
-                if (heartCard) heartCard.textContent = '🤍';
-                if (heartModal) heartModal.textContent = '🤍';
-            }
+            // 좋아요 수 증가
+            work.likes = (work.likes || 0) + 1;
             
-            // 좋아요 수 업데이트
+            // 화면 즉시 업데이트
             if (likesCard) likesCard.textContent = work.likes;
             if (likesModal) likesModal.textContent = work.likes;
+            
+            // 애니메이션 효과
+            if (heartCard) {
+                heartCard.style.transform = 'scale(1.3)';
+                setTimeout(() => heartCard.style.transform = 'scale(1)', 200);
+            }
+            if (heartModal) {
+                heartModal.style.transform = 'scale(1.3)';
+                setTimeout(() => heartModal.style.transform = 'scale(1)', 200);
+            }
+            
+            // Firebase에 저장 (실시간 동기화)
+            await saveLikesToFirebase(workId, work.likes, work.views);
         }
 
         function closeModal() {
@@ -683,6 +765,12 @@
 
         // 이벤트 리스너
         document.addEventListener('DOMContentLoaded', function() {
+            // 기본 렌더링 먼저 수행
+            renderWorks();
+            
+            // Firebase 초기화 시도
+            waitForFirebase();
+            
             // 카테고리 버튼 클릭
             document.querySelectorAll('.category-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
