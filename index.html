@@ -260,6 +260,47 @@
             padding-top: 15px;
         }
 
+        .work-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .like-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+
+        .like-btn:hover {
+            background: rgba(231, 76, 60, 0.1);
+            transform: scale(1.05);
+        }
+
+        .heart {
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+        }
+
+        .liked .heart {
+            transform: scale(1.2);
+        }
+
+        .views {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            color: #95a5a6;
+            font-size: 0.85em;
+        }
+
         .ai-tools {
             display: flex;
             gap: 8px;
@@ -295,8 +336,8 @@
             background: white;
             border-radius: 20px;
             padding: 40px;
-            max-width: 800px;
-            max-height: 80vh;
+            max-width: 900px;
+            max-height: 85vh;
             overflow-y: auto;
             box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
         }
@@ -397,13 +438,14 @@
             {
                 id: 1,
                 title: "북항에서 레포츠를 즐기는 갈매기",
-                author: "최한나(기획감사실)",
+                author: "최한나 (기획감사실)",
                 category: "이미지",
                 preview: "태양 아래 선글라스를 이마에 올린 채 패들보드를 타며 역동적인 에너지를 뿜어냅니다. 부산 북항의 드넓은 바다와 다리, 유람선, 그리고 여름의 활기찬 공기가 함께 어우러져...",
                 content: "태양 아래 선글라스를 이마에 올린 채 패들보드를 타며 역동적인 에너지를 뿜어냅니다. 부산 북항의 드넓은 바다와 다리, 유람선, 그리고 여름의 활기찬 공기가 함께 어우러져 '레포츠의 도시, 동구'를 상징적으로 표현했습니다.\n\n이 작품은 부산 동구의 해양 스포츠 문화와 활기찬 에너지를 갈매기라는 친숙한 캐릭터를 통해 표현한 AI 이미지 생성 작품입니다. 북항의 실제 풍경을 배경으로 하여 지역의 정체성과 현대적인 레포츠 문화가 조화롭게 어우러진 모습을 담았습니다.",
                 aiTools: ["AI 이미지 생성"],
                 date: "2024-08-19",
                 views: 45,
+                likes: 12,
                 image: "https://raw.githubusercontent.com/jaerim92/ai_contest/main/test1.png",
                 imageDescription: "북항에서 패들보드를 즐기는 갈매기 캐릭터"
             },
@@ -417,6 +459,7 @@
                 aiTools: ["ChatGPT", "Claude"],
                 date: "2024-08-15",
                 views: 127,
+                likes: 8,
                 image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=300&fit=crop",
                 imageDescription: "키보드와 디지털 화면이 조화를 이루는 모습"
             },
@@ -430,6 +473,7 @@
                 aiTools: ["Gemini"],
                 date: "2024-08-14",
                 views: 89,
+                likes: 15,
                 image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop",
                 imageDescription: "미래적인 로봇과 사무실 환경"
             },
@@ -443,6 +487,7 @@
                 aiTools: ["Suno", "AIVA"],
                 date: "2024-08-10",
                 views: 156,
+                likes: 22,
                 image: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop",
                 imageDescription: "음악과 AI가 만나는 창작의 순간"
             }
@@ -487,7 +532,13 @@
                             <div class="ai-tools">
                                 ${work.aiTools.map(tool => `<span class="ai-tool">${tool}</span>`).join('')}
                             </div>
-                            <div class="work-date">${work.date}</div>
+                            <div class="work-actions">
+                                <button class="like-btn" onclick="event.stopPropagation(); toggleLike(${work.id})">
+                                    <span class="heart" id="heart-${work.id}">🤍</span>
+                                    <span class="like-count" id="likes-${work.id}">${work.likes || 0}</span>
+                                </button>
+                                <span class="views">👁️ ${work.views}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -511,8 +562,8 @@
                 ${work.image ? 
                     `<div style="text-align: center; margin-bottom: 30px;">
                         <img src="${work.image}" alt="${work.title}" 
-                             style="max-width: 100%; max-height: 700px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-                        ${work.imageDescription ? `<p style="color: #7f8c8d; font-size: 0.9em; margin-top: 10px; font-style: italic;">${work.imageDescription}</p>` : ''}
+                             style="max-width: 100%; max-height: 500px; width: auto; height: auto; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                        ${work.imageDescription ? `<p style="color: #7f8c8d; font-size: 0.9em; margin-top: 15px; font-style: italic;">${work.imageDescription}</p>` : ''}
                     </div>` 
                     : ''
                 }
@@ -525,9 +576,15 @@
                 <div style="background: #f8f9fa; padding: 30px; border-radius: 15px; margin-bottom: 20px;">
                     <pre style="white-space: pre-wrap; font-family: 'Noto Sans KR', sans-serif; line-height: 1.8; font-size: 1.1em; color: #333;">${work.content}</pre>
                 </div>
-                <div style="display: flex; justify-content: space-between; color: #95a5a6; font-size: 0.9em; border-top: 1px solid #ecf0f1; padding-top: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; color: #95a5a6; font-size: 0.9em; border-top: 1px solid #ecf0f1; padding-top: 20px;">
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <button class="like-btn" onclick="toggleLike(${work.id})" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 8px 15px; border-radius: 20px; transition: all 0.3s ease;">
+                            <span class="heart" id="modal-heart-${work.id}" style="font-size: 1.5em;">🤍</span>
+                            <span class="like-count" id="modal-likes-${work.id}" style="font-weight: 600;">${work.likes || 0}</span>
+                        </button>
+                        <span style="display: flex; align-items: center; gap: 5px;">👁️ ${work.views}</span>
+                    </div>
                     <span>작성일: ${work.date}</span>
-                    <span>조회수: ${work.views}</span>
                 </div>
             `;
             
@@ -535,6 +592,48 @@
             
             // 조회수 증가
             work.views++;
+        }
+
+        // 좋아요 기능
+        function toggleLike(workId) {
+            const work = works.find(w => w.id === workId);
+            if (!work) return;
+
+            const heartCard = document.getElementById(`heart-${workId}`);
+            const likesCard = document.getElementById(`likes-${workId}`);
+            const heartModal = document.getElementById(`modal-heart-${workId}`);
+            const likesModal = document.getElementById(`modal-likes-${workId}`);
+            
+            // 좋아요 상태 토글
+            if (!work.isLiked) {
+                work.likes = (work.likes || 0) + 1;
+                work.isLiked = true;
+                
+                // 하트 색상 변경
+                if (heartCard) heartCard.textContent = '❤️';
+                if (heartModal) heartModal.textContent = '❤️';
+                
+                // 애니메이션 효과
+                if (heartCard) {
+                    heartCard.style.transform = 'scale(1.3)';
+                    setTimeout(() => heartCard.style.transform = 'scale(1)', 200);
+                }
+                if (heartModal) {
+                    heartModal.style.transform = 'scale(1.3)';
+                    setTimeout(() => heartModal.style.transform = 'scale(1)', 200);
+                }
+            } else {
+                work.likes = Math.max(0, work.likes - 1);
+                work.isLiked = false;
+                
+                // 하트 색상 변경
+                if (heartCard) heartCard.textContent = '🤍';
+                if (heartModal) heartModal.textContent = '🤍';
+            }
+            
+            // 좋아요 수 업데이트
+            if (likesCard) likesCard.textContent = work.likes;
+            if (likesModal) likesModal.textContent = work.likes;
         }
 
         function closeModal() {
