@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>부산 동구청 생성형 AI 문예창작 대회 갤러리</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px 20px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 10px 20px;
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .category-nav {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .category-btn {
+            padding: 12px 25px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .category-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            background: white;
+        }
+
+        .category-btn.active {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+            transform: translateY(-3px);
+        }
+
+        .filter-options {
+            display: none;
+        }
+
+        .search-container {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .search-input {
+            padding: 15px 20px;
+            width: 100%;
+            max-width: 500px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255,255,255,0.9);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            font-size: 1em;
+            outline: none;
+        }
+
+        .works-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .work-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            transition: all 0.4s ease;
+            backdrop-filter: blur(10px);
+            cursor: pointer;
+        }
+
+        .work-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .work-image {
+            height: 200px;
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .work-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .work-image img[src*="github"] {
+            background: #f8f9fa;
+        }
+
+        .work-image img:not([src]), .work-image img[src=""] {
+            display: none;
+        }
+
+        .work-card:hover .work-image img {
+            transform: scale(1.05);
+        }
+
+        .work-image.no-image::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(1px);
+        }
+
+        .image-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.7));
+            color: white;
+            padding: 15px;
+            font-size: 0.9em;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .work-card:hover .image-overlay {
+            opacity: 1;
+        }
+
+        .work-content {
+            padding: 25px;
+        }
+
+        .work-category {
+            display: inline-block;
+            padding: 5px 12px;
+            background: linear-gradient(45deg, #9b59b6, #8e44ad);
+            color: white;
+            border-radius: 15px;
+            font-size: 0.8em;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .work-title {
+            font-size: 1.4em;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            line-height: 1.3;
+        }
+
+        .work-author {
+            color: #7f8c8d;
+            font-size: 1em;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .work-preview {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .work-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9em;
+            color: #95a5a6;
+            border-top: 1px solid #ecf0f1;
+            padding-top: 15px;
+        }
+
+        .ai-tools {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .ai-tool {
+            padding: 3px 8px;
+            background: linear-gradient(45deg, #16a085, #27ae60);
+            color: white;
+            border-radius: 10px;
+            font-size: 0.75em;
+            font-weight: 500;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            font-size: 30px;
+            cursor: pointer;
+            color: #95a5a6;
+            transition: color 0.3s;
+        }
+
+        .close-btn:hover {
+            color: #e74c3c;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .works-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .category-nav {
+                gap: 10px;
+            }
+            
+            .category-btn {
+                padding: 10px 20px;
+                font-size: 0.9em;
+            }
+            
+            .modal-content {
+                margin: 20px;
+                padding: 30px 20px;
+                max-width: calc(100% - 40px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏛️ 부산 동구청 생성형 AI 문예창작 대회</h1>
+            <p>직원들의 창의적인 AI 활용 작품을 만나보세요</p>
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-number" id="totalWorks">4</span>
+                    <span class="stat-label">총 작품수</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">4</span>
+                    <span class="stat-label">참여 부서</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">4</span>
+                    <span class="stat-label">참여 직원</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="category-nav">
+            <button class="category-btn active" data-category="all">전체 작품</button>
+            <button class="category-btn" data-category="시">시 (Poetry)</button>
+            <button class="category-btn" data-category="소설">소설 (Fiction)</button>
+            <button class="category-btn" data-category="이미지">이미지 (Image)</button>
+            <button class="category-btn" data-category="노래">노래 (Song)</button>
+        </div>
+
+
+
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="작품 제목이나 작가명으로 검색하세요...">
+        </div>
+
+        <div class="works-grid" id="worksGrid">
+            <!-- 작품들이 JavaScript로 동적 생성됩니다 -->
+        </div>
+    </div>
+
+    <div class="modal" id="workModal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <div id="modalContent">
+                <!-- 모달 내용이 동적으로 생성됩니다 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 실제 출품작 포함 샘플 데이터
+        const works = [
+            {
+                id: 1,
+                title: "북항에서 레포츠를 즐기는 갈매기",
+                author: "최한나 (기획감사실)",
+                category: "이미지",
+                preview: "태양 아래 선글라스를 이마에 올린 채 패들보드를 타며 역동적인 에너지를 뿜어냅니다. 부산 북항의 드넓은 바다와 다리, 유람선, 그리고 여름의 활기찬 공기가 함께 어우러져...",
+                content: "태양 아래 선글라스를 이마에 올린 채 패들보드를 타며 역동적인 에너지를 뿜어냅니다. 부산 북항의 드넓은 바다와 다리, 유람선, 그리고 여름의 활기찬 공기가 함께 어우러져 '레포츠의 도시, 동구'를 상징적으로 표현했습니다.\n\n이 작품은 부산 동구의 해양 스포츠 문화와 활기찬 에너지를 갈매기라는 친숙한 캐릭터를 통해 표현한 AI 이미지 생성 작품입니다. 북항의 실제 풍경을 배경으로 하여 지역의 정체성과 현대적인 레포츠 문화가 조화롭게 어우러진 모습을 담았습니다.",
+                aiTools: ["AI 이미지 생성"],
+                date: "2024-08-19",
+                views: 45,
+                // image: 없음 - 아이콘으로 표시
+                imageDescription: "북항에서 패들보드를 즐기는 갈매기 캐릭터"
+            },
+            {
+                id: 2,
+                title: "디지털 시대의 향수",
+                author: "김민수 (기획예산과)",
+                category: "시",
+                preview: "키보드 소리가 울려 퍼지는\n사무실 한 켠에서\nAI와 함께 써내려가는\n새로운 시대의 이야기...",
+                content: "키보드 소리가 울려 퍼지는\n사무실 한 켠에서\nAI와 함께 써내려가는\n새로운 시대의 이야기\n\n과거의 펜과 종이는\n이제 화면 속 글자가 되고\n생각은 알고리즘과 만나\n예상치 못한 시를 낳는다\n\n인공지능이 제안하는\n단어들 사이로\n여전히 흐르는 것은\n인간의 따뜻한 감성\n\n기술은 도구일 뿐\n진정한 창작의 힘은\n여전히 우리 마음 속에\n살아 숨쉬고 있다",
+                aiTools: ["ChatGPT", "Claude"],
+                date: "2024-08-15",
+                views: 127,
+                image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=300&fit=crop",
+                imageDescription: "키보드와 디지털 화면이 조화를 이루는 모습"
+            },
+            {
+                id: 3,
+                title: "동구청 로봇 직원 이야기",
+                author: "박영희 (민원봉사과)",
+                category: "소설",
+                preview: "2030년 동구청에 새로운 직원이 왔다. 이름은 '동동이', 최첨단 AI 로봇이었다. 첫날부터 민원인들의 관심을 한 몸에 받았지만...",
+                content: "2030년 동구청에 새로운 직원이 왔다. 이름은 '동동이', 최첨단 AI 로봇이었다.\n\n첫날부터 민원인들의 관심을 한 몸에 받았던 동동이는 완벽한 업무 처리로 모든 이의 찬사를 받았다. 하지만 시간이 지날수록 동동이는 고민에 빠졌다.\n\n'나는 정말 이 일을 사랑하고 있는 걸까?'\n\n어느 날 한 할머니가 찾아왔다. 복잡한 서류 때문이 아니라, 단지 말 상대가 필요해서였다. 동동이는 규정에 없는 이 상황에 당황했지만, 할머니의 외로운 눈빛을 보며 무언가를 깨달았다.\n\n그날 이후 동동이는 변했다. 단순한 업무 처리를 넘어, 사람들의 마음을 읽고 공감하려 노력했다. AI 로봇이지만 진정한 '사람을 위한 행정'이 무엇인지 알아가며 성장하는 이야기.",
+                aiTools: ["Gemini"],
+                date: "2024-08-14",
+                views: 89,
+                image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop",
+                imageDescription: "미래적인 로봇과 사무실 환경"
+            },
+            {
+                id: 4,
+                title: "동구청 찬가",
+                author: "최민준 (총무과)",
+                category: "노래",
+                preview: "AI 작곡 도구로 만든 동구청 직원들을 위한 응원가입니다. 밝고 희망찬 멜로디와 함께 우리의 일상과 꿈을 담았습니다...",
+                content: "🎵 동구청 찬가 🎵\n\n[1절]\n아침 햇살 받으며 출근하는 길\n시민들의 웃음소리 들려오네\n오늘도 우리는 최선을 다해\n따뜻한 행정 서비스로\n\n[후렴]\n동구여 영원하라 우리의 터전\nAI와 함께 만드는 새로운 내일\n정성과 기술이 하나 되어\n더 나은 세상을 만들어가네\n\n[2절]\n민원실에서 만나는 할머니의 미소\n컴퓨터 화면 속 데이터들도\n모두 소중한 이야기들\n우리가 지켜가는 보물들\n\n[후렴 반복]\n\n※ 이 노래는 AI 작곡 프로그램 'Suno'와 'AIVA'를 활용하여 멜로디를 생성하고, 가사는 직원들의 일상 이야기를 바탕으로 창작했습니다.",
+                aiTools: ["Suno", "AIVA"],
+                date: "2024-08-10",
+                views: 156,
+                image: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop",
+                imageDescription: "음악과 AI가 만나는 창작의 순간"
+            }
+        ];
+
+        let currentCategory = 'all';
+
+        function getCategoryIcon(category) {
+            const icons = {
+                '시': '📝',
+                '소설': '📚',
+                '이미지': '🎨',
+                '노래': '🎵'
+            };
+            return icons[category] || '📄';
+        }
+
+        function renderWorks() {
+            const worksGrid = document.getElementById('worksGrid');
+            
+            let filteredWorks = works.filter(work => {
+                const categoryMatch = currentCategory === 'all' || work.category === currentCategory;
+                return categoryMatch;
+            });
+
+            worksGrid.innerHTML = filteredWorks.map(work => `
+                <div class="work-card" onclick="openModal(${work.id})">
+                    <div class="work-image ${!work.image ? 'no-image' : ''}">
+                        ${work.image ? 
+                            `<img src="${work.image}" alt="${work.title}" loading="lazy" 
+                                  onerror="this.style.display='none'; this.parentNode.innerHTML='${getCategoryIcon(work.category)}';">
+                             <div class="image-overlay">${work.imageDescription || ''}</div>` 
+                            : getCategoryIcon(work.category)
+                        }
+                    </div>
+                    <div class="work-content">
+                        <div class="work-category">${work.category}</div>
+                        <h3 class="work-title">${work.title}</h3>
+                        <p class="work-author">${work.author}</p>
+                        <div class="work-preview">${work.preview}</div>
+                        <div class="work-meta">
+                            <div class="ai-tools">
+                                ${work.aiTools.map(tool => `<span class="ai-tool">${tool}</span>`).join('')}
+                            </div>
+                            <div class="work-date">${work.date}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            updateStats(filteredWorks.length);
+        }
+
+        function updateStats(filteredCount) {
+            document.getElementById('totalWorks').textContent = filteredCount;
+        }
+
+        function openModal(workId) {
+            const work = works.find(w => w.id === workId);
+            if (!work) return;
+
+            const modal = document.getElementById('workModal');
+            const modalContent = document.getElementById('modalContent');
+            
+            modalContent.innerHTML = `
+                ${work.image ? 
+                    `<div style="text-align: center; margin-bottom: 30px;">
+                        <img src="${work.image}" alt="${work.title}" 
+                             style="max-width: 100%; max-height: 300px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                        ${work.imageDescription ? `<p style="color: #7f8c8d; font-size: 0.9em; margin-top: 10px; font-style: italic;">${work.imageDescription}</p>` : ''}
+                    </div>` 
+                    : ''
+                }
+                <div class="work-category" style="margin-bottom: 20px;">${work.category}</div>
+                <h2 style="font-size: 2em; margin-bottom: 10px; color: #2c3e50;">${work.title}</h2>
+                <p style="color: #7f8c8d; margin-bottom: 20px; font-size: 1.1em;">${work.author}</p>
+                <div style="margin-bottom: 20px;">
+                    ${work.aiTools.map(tool => `<span class="ai-tool" style="margin-right: 10px;">${tool}</span>`).join('')}
+                </div>
+                <div style="background: #f8f9fa; padding: 30px; border-radius: 15px; margin-bottom: 20px;">
+                    <pre style="white-space: pre-wrap; font-family: 'Noto Sans KR', sans-serif; line-height: 1.8; font-size: 1.1em; color: #333;">${work.content}</pre>
+                </div>
+                <div style="display: flex; justify-content: space-between; color: #95a5a6; font-size: 0.9em; border-top: 1px solid #ecf0f1; padding-top: 20px;">
+                    <span>작성일: ${work.date}</span>
+                    <span>조회수: ${work.views}</span>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+            
+            // 조회수 증가
+            work.views++;
+        }
+
+        function closeModal() {
+            document.getElementById('workModal').style.display = 'none';
+        }
+
+        function performSearch() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            let filteredWorks = works.filter(work => {
+                const categoryMatch = currentCategory === 'all' || work.category === currentCategory;
+                const searchMatch = searchTerm === '' || 
+                    work.title.toLowerCase().includes(searchTerm) || 
+                    work.author.toLowerCase().includes(searchTerm) ||
+                    work.content.toLowerCase().includes(searchTerm);
+                
+                return categoryMatch && searchMatch;
+            });
+            
+            const worksGrid = document.getElementById('worksGrid');
+            worksGrid.innerHTML = filteredWorks.map(work => `
+                <div class="work-card" onclick="openModal(${work.id})">
+                    <div class="work-image ${!work.image ? 'no-image' : ''}">
+                        ${work.image ? 
+                            `<img src="${work.image}" alt="${work.title}" loading="lazy">
+                             <div class="image-overlay">${work.imageDescription || ''}</div>` 
+                            : getCategoryIcon(work.category)
+                        }
+                    </div>
+                    <div class="work-content">
+                        <div class="work-category">${work.category}</div>
+                        <h3 class="work-title">${work.title}</h3>
+                        <p class="work-author">${work.author}</p>
+                        <div class="work-preview">${work.preview}</div>
+                        <div class="work-meta">
+                            <div class="ai-tools">
+                                ${work.aiTools.map(tool => `<span class="ai-tool">${tool}</span>`).join('')}
+                            </div>
+                            <div class="work-date">${work.date}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            updateStats(filteredWorks.length);
+        }
+
+        // 이벤트 리스너
+        document.addEventListener('DOMContentLoaded', function() {
+            // 카테고리 버튼 클릭
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentCategory = this.dataset.category;
+                    performSearch(); // 검색과 필터를 통합
+                });
+            });
+
+            // 필터 버튼 클릭 (제거됨)
+
+            // 검색 입력
+            document.getElementById('searchInput').addEventListener('input', performSearch);
+
+            // 모달 닫기
+            document.querySelector('.close-btn').addEventListener('click', closeModal);
+            document.getElementById('workModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+
+            // ESC 키로 모달 닫기
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeModal();
+                }
+            });
+
+            // 초기 렌더링
+            renderWorks();
+        });
+    </script>
+</body>
+</html>
