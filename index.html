@@ -1,4 +1,45 @@
-<!DOCTYPE html>
+// 이벤트 리스너 설정
+        document.addEventListener('DOMContentLoaded', function() {
+            // Firebase에서 작품 로드
+            loadWorksFromFirebase();
+            
+            // 카테고리 버튼 클릭
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentCategory = this.dataset.category;
+                    performSearch();
+                });
+            });
+
+            // 검색 입력
+            document.getElementById('searchInput').addEventListener('input', performSearch);
+
+            // 모달 닫기
+            document.querySelector('.close-btn').addEventListener('click', closeModal);
+            document.getElementById('workModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+
+            // ESC 키로 모달 닫기
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeModal();
+                }
+            });
+        });
+
+        // 전역 함수로 내보내기
+        window.closeModal = closeModal;
+    </script>
+</body>
+</html>
+    </script>
+</body>
+</html><!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -421,14 +462,11 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
+    <!-- Firebase SDK (호환 버전) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
-        import { getFirestore, collection, getDocs, doc, updateDoc, onSnapshot, increment, query, orderBy } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
-
+    <script>
         // Firebase 설정
         const firebaseConfig = {
             apiKey: "AIzaSyD7E_cvY0alSd-_tvOXTWSSv8FUM_u0k4g",
@@ -442,8 +480,8 @@
         };
 
         // Firebase 초기화
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
         // 전역 변수
         let works = [];
@@ -464,9 +502,7 @@
         async function loadWorksFromFirebase() {
             try {
                 console.log('Firebase에서 작품 데이터 로드 중...');
-                const worksRef = collection(db, 'works');
-                const q = query(worksRef, orderBy('createdAt', 'desc'));
-                const snapshot = await getDocs(q);
+                const snapshot = await db.collection('works').orderBy('createdAt', 'desc').get();
                 
                 works = [];
                 snapshot.forEach((doc) => {
@@ -495,7 +531,8 @@
                 document.getElementById('worksGrid').innerHTML = `
                     <div class="loading" style="color: #e74c3c;">
                         ⚠️ 작품을 불러오는 중 오류가 발생했습니다.<br>
-                        잠시 후 다시 시도해주세요.
+                        잠시 후 다시 시도해주세요.<br>
+                        <small>오류: ${error.message}</small>
                     </div>
                 `;
             }
@@ -504,8 +541,7 @@
         // 실시간 업데이트 리스너
         function setupRealtimeListener() {
             try {
-                const worksRef = collection(db, 'works');
-                onSnapshot(worksRef, (snapshot) => {
+                db.collection('works').onSnapshot((snapshot) => {
                     snapshot.docChanges().forEach((change) => {
                         const workData = { id: change.doc.id, ...change.doc.data() };
                         
@@ -520,13 +556,16 @@
                                     aiTools: Array.isArray(workData.tools) ? workData.tools : [workData.tools || 'AI']
                                 };
                             } else {
-                                // 새 작품 추가
-                                works.push({
-                                    ...workData,
-                                    aiTools: Array.isArray(workData.tools) ? workData.tools : [workData.tools || 'AI'],
-                                    likes: workData.likes || 0,
-                                    views: workData.views || 0
-                                });
+                                // 새 작품 추가 (초기 로드가 아닌 경우)
+                                if (works.length > 0) {
+                                    works.push({
+                                        ...workData,
+                                        aiTools: Array.isArray(workData.tools) ? workData.tools : [workData.tools || 'AI'],
+                                        likes: workData.likes || 0,
+                                        views: workData.views || 0
+                                    });
+                                    renderWorks();
+                                }
                             }
                             
                             // 화면 업데이트
@@ -670,9 +709,9 @@
         // 좋아요 토글
         window.toggleLike = async function(workId) {
             try {
-                const workRef = doc(db, 'works', workId);
-                await updateDoc(workRef, {
-                    likes: increment(1)
+                const workRef = db.collection('works').doc(workId);
+                await workRef.update({
+                    likes: firebase.firestore.FieldValue.increment(1)
                 });
                 
                 // 로컬 데이터도 즉시 업데이트 (UI 반응성)
@@ -698,16 +737,66 @@
             }
         }
 
-        // 조회수 증가
-        async function incrementViews(workId) {
-            try {
-                const workRef = doc(db, 'works', workId);
-                await updateDoc(workRef, {
-                    views: increment(1)
-                });
-            } catch (error) {
-                console.error('조회수 업데이트 오류:', error);
+        // 검색 및 필터링
+        function performSearch() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            let filteredWorks = works.filter(work => {
+                const categoryMatch = currentCategory === 'all' || work.category === currentCategory;
+                const searchMatch = searchTerm === '' || 
+                    work.title?.toLowerCase().includes(searchTerm) || 
+                    work.author?.toLowerCase().includes(searchTerm) ||
+                    work.department?.toLowerCase().includes(searchTerm) ||
+                    work.content?.toLowerCase().includes(searchTerm);
+                
+                return categoryMatch && searchMatch;
+            });
+            
+            const worksGrid = document.getElementById('worksGrid');
+            
+            if (filteredWorks.length === 0) {
+                worksGrid.innerHTML = `
+                    <div class="loading">🔍 검색 결과가 없습니다.</div>
+                `;
+                return;
             }
+
+            worksGrid.innerHTML = filteredWorks.map(work => `
+                <div class="work-card" onclick="openModal('${work.id}')">
+                    <div class="work-image ${!work.image ? 'no-image' : ''}">
+                        ${work.image ? 
+                            `<img src="${work.image}" alt="${work.title}" loading="lazy" 
+                                  onerror="this.style.display='none'; this.parentNode.innerHTML='${getCategoryIcon(work.category)}';">` 
+                            : getCategoryIcon(work.category)
+                        }
+                    </div>
+                    <div class="work-content">
+                        <div class="work-category">${work.category}</div>
+                        <h3 class="work-title">${work.title}</h3>
+                        <p class="work-author">${work.author} (${work.department})</p>
+                        <div class="work-preview">${work.preview || work.content?.substring(0, 100) + '...' || ''}</div>
+                        <div class="work-meta">
+                            <div class="ai-tools">
+                                ${work.aiTools.map(tool => `<span class="ai-tool">${tool}</span>`).join('')}
+                            </div>
+                            <div class="work-actions">
+                                <button class="like-btn" onclick="event.stopPropagation(); toggleLike('${work.id}')">
+                                    <span class="heart" id="heart-${work.id}">❤️</span>
+                                    <span class="like-count" id="likes-${work.id}">${work.likes || 0}</span>
+                                </button>
+                                <span class="views" id="views-${work.id}">👁️ ${work.views || 0}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            updateStats();
+        }
+
+        // 모달 닫기
+        function closeModal() {
+            document.getElementById('workModal').style.display = 'none';
         }
 
         // 검색 및 필터링
