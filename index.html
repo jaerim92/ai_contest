@@ -859,7 +859,7 @@
                 }
 
                 gallery.innerHTML = this.filteredWorks.map(work => `
-                    <div class="gallery-item" onclick="gallery.openModal('${work.id}')">
+                    <div class="gallery-item" data-work-id="${work.id}">
                         <div class="item-image">
                             ${work.image 
                                 ? `<img src="${work.image}" alt="${work.title}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=item-placeholder>🎨</div>'">`
@@ -891,26 +891,73 @@
                                     📅 ${work.date || new Date(work.created_at).toLocaleDateString('ko-KR')}
                                 </div>
                                 <div class="item-stats">
-                                    <div class="stat" onclick="event.stopPropagation(); gallery.likeWork('${work.id}')">
-                                        ❤️ ${work.likes || 0}
+                                    <div class="stat like-btn" data-work-id="${work.id}">
+                                        ❤️ <span class="like-count">${work.likes || 0}</span>
                                     </div>
                                     <div class="stat">
-                                        👁️ ${work.views || 0}
+                                        👁️ <span class="view-count">${work.views || 0}</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 `).join('');
+
+                // 이벤트 리스너 추가
+                this.attachItemEventListeners();
             }
 
-            async openModal(workId) {
-                const work = this.filteredWorks.find(w => w.id === workId);
-                if (!work) return;
+            attachItemEventListeners() {
+                // 갤러리 아이템 클릭 이벤트 (모달 열기)
+                document.querySelectorAll('.gallery-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        // 좋아요 버튼 클릭 시에는 모달을 열지 않음
+                        if (e.target.closest('.like-btn')) {
+                            return;
+                        }
+                        
+                        const workId = item.dataset.workId;
+                        this.openModal(workId);
+                    });
+                });
 
-                // 조회수 증가
-                await this.updateWorkStats(work.id, 'views');
-                this.updateStats();
+                // 좋아요 버튼 클릭 이벤트
+                document.querySelectorAll('.like-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation(); // 이벤트 버블링 방지
+                        const workId = btn.dataset.workId;
+                        this.likeWork(workId);
+                    });
+                });
+
+            async openModal(workId) {
+                console.log('모달 열기:', workId);
+                
+                const work = this.filteredWorks.find(w => w.id == workId);
+                if (!work) {
+                    console.error('작품을 찾을 수 없습니다:', workId);
+                    return;
+                }
+
+                try {
+                    // 조회수 증가
+                    await this.updateWorkStats(work.id, 'views');
+                    
+                    // 로컬 데이터 즉시 업데이트
+                    work.views = (work.views || 0) + 1;
+                    
+                    // 화면에서 조회수 즉시 업데이트
+                    const viewCountSpan = document.querySelector(`.gallery-item[data-work-id="${workId}"] .view-count`);
+                    if (viewCountSpan) {
+                        viewCountSpan.textContent = work.views;
+                    }
+                    
+                    this.updateStats();
+                    console.log('✅ 조회수 업데이트 완료:', work.views);
+                    
+                } catch (error) {
+                    console.error('❌ 조회수 업데이트 실패:', error);
+                }
 
                 const modalBody = document.getElementById('modalBody');
                 modalBody.innerHTML = `
@@ -950,29 +997,67 @@
                                 📅 ${work.date || new Date(work.created_at).toLocaleDateString('ko-KR')}
                             </div>
                             <div style="display: flex; gap: 1rem;">
-                                <button onclick="gallery.likeWork('${work.id}')" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.25rem; color: #e74c3c;">
-                                    ❤️ ${work.likes || 0}
+                                <button class="modal-like-btn" data-work-id="${work.id}" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.25rem; color: #e74c3c; font-size: 1rem;">
+                                    ❤️ <span class="modal-like-count">${work.likes || 0}</span>
                                 </button>
-                                <div style="display: flex; align-items: center; gap: 0.25rem; color: #666;">
-                                    👁️ ${work.views || 0}
+                                <div style="display: flex; align-items: center; gap: 0.25rem; color: #666; font-size: 1rem;">
+                                    👁️ <span class="modal-view-count">${work.views || 0}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 `;
 
+                // 모달 내 좋아요 버튼 이벤트 리스너 추가
+                const modalLikeBtn = modalBody.querySelector('.modal-like-btn');
+                if (modalLikeBtn) {
+                    modalLikeBtn.addEventListener('click', async () => {
+                        console.log('모달에서 좋아요 클릭:', work.id);
+                        await this.likeWork(work.id);
+                        
+                        // 모달 내 좋아요 수 업데이트
+                        const modalLikeCount = modalBody.querySelector('.modal-like-count');
+                        if (modalLikeCount) {
+                            modalLikeCount.textContent = work.likes;
+                        }
+                    });
+                }
+
                 document.getElementById('modal').classList.add('active');
                 document.body.style.overflow = 'hidden';
+                
+                console.log('✅ 모달 열기 완료');
             }
 
             async likeWork(workId) {
-                await this.updateWorkStats(workId, 'likes');
-                this.renderGallery();
-                this.updateStats();
+                console.log('좋아요 클릭:', workId);
                 
-                // 모달이 열려있으면 모달도 업데이트
-                if (document.getElementById('modal').classList.contains('active')) {
-                    this.openModal(workId);
+                try {
+                    await this.updateWorkStats(workId, 'likes');
+                    
+                    // 로컬 데이터 즉시 업데이트
+                    const work = this.works.find(w => w.id == workId);
+                    if (work) {
+                        work.likes = (work.likes || 0) + 1;
+                        
+                        // 화면에서 좋아요 수 즉시 업데이트
+                        const likeBtn = document.querySelector(`.like-btn[data-work-id="${workId}"]`);
+                        if (likeBtn) {
+                            const likeCountSpan = likeBtn.querySelector('.like-count');
+                            if (likeCountSpan) {
+                                likeCountSpan.textContent = work.likes;
+                            }
+                        }
+                        
+                        // 통계 업데이트
+                        this.updateStats();
+                        
+                        console.log('✅ 좋아요 업데이트 완료:', work.likes);
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ 좋아요 업데이트 실패:', error);
+                    alert('좋아요 업데이트에 실패했습니다.');
                 }
             }
 
